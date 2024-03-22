@@ -11,6 +11,7 @@ import mysql.connector
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import mplfinance as mpf
+import plotly.graph_objects as go
 
 
 def GetConnection():
@@ -53,16 +54,16 @@ def ComputeTA(data):
     data["EMA5"] = ta.trend.EMAIndicator(data["close"], 5, False).ema_indicator()
     data["EMA10"] = ta.trend.EMAIndicator(data["close"], 10, False).ema_indicator()
     data["EMA20"] = ta.trend.EMAIndicator(data["close"], 20, False).ema_indicator()
+    data["SMA5"] = ta.trend.SMAIndicator(data["close"], 5, False).sma_indicator()
+    data["SMA10"] = ta.trend.SMAIndicator(data["close"], 10, False).sma_indicator()
+    data["SMA20"] = ta.trend.SMAIndicator(data["close"], 20, False).sma_indicator()
     return data
 
 def PrepareData(data):
     candle = data[["date", "Trading_Volume", "open", "close", "max", "min"]]
-    candle.columns = ["Date", "Volume", "Open", "Close", "High", "Low"]
-    candle.index = pd.to_datetime(candle["Date"])
-    candle = candle.drop(["Date"], axis=1)
-    candle = candle[["Open", "High", "Low", "Close", "Volume"]]
+    candle.columns = ["date", "volume", "open", "close", "high", "low"]
 
-    ta = data[["EMA5", "EMA10", "EMA20"]]
+    ta = data[["date", "EMA5", "EMA10", "EMA20", "SMA5", "SMA10", "SMA20"]]
     return [candle, ta]
 
 
@@ -112,45 +113,50 @@ candle_data_all, ta_data_all = PrepareData(data)
 
 
 
-genre = st.radio(
+genre_duration = st.radio(
     "請選擇繪圖日期長度",
     ["1月", "3月", "5月", "1年", "5年", "全部時間"],
     horizontal=True
     )
 
-if genre == '1月':
+if genre_duration == '1月':
     candle_data_part, ta_data_part = FilterDate(candle_data_all, ta_data_all, 0)
-elif genre == '3月':
+elif genre_duration == '3月':
     candle_data_part, ta_data_part = FilterDate(candle_data_all, ta_data_all, 1)
-elif genre == '5月':
+elif genre_duration == '5月':
     candle_data_part, ta_data_part = FilterDate(candle_data_all, ta_data_all, 2)
-elif genre == '1年':
+elif genre_duration == '1年':
     candle_data_part, ta_data_part = FilterDate(candle_data_all, ta_data_all, 3)
-elif genre == '5年':
+elif genre_duration == '5年':
     candle_data_part, ta_data_part = FilterDate(candle_data_all, ta_data_all, 4)
 else:
     candle_data_part, ta_data_part = FilterDate(candle_data_all, ta_data_all, 5)
 
-
-add_plot = {
-    "EMA5" : mpf.make_addplot(ta_data_part["EMA5"], color="r", panel=0, width=3),
-    "EMA10" : mpf.make_addplot(ta_data_part["EMA10"], color="g", panel=0, width=3),
-    "EMA20" : mpf.make_addplot(ta_data_part["EMA20"], color="b", panel=0, width=3)   
-}
-
-mc = mpf.make_marketcolors(up="r", down="g")
-s = mpf.make_mpf_style(marketcolors=mc)
-fig, ax = mpf.plot(
-    candle_data_part, 
-    type="candle", 
-    volume=True, 
-    addplot=list(add_plot.values()), 
-    returnfig=True, 
-    style=s
+genre_MA_select = st.radio(
+    "均線選擇",
+    ["SMA", "EMA"],
     )
-ax[0].legend([0]*(len(add_plot)+2))
-handles = ax[0].get_legend().legendHandles
-ax[0].legend(handles = handles[2:], labels = list(add_plot.keys()))
-st.pyplot(fig)
+
+if genre_MA_select == "EMA":
+    ma5 = go.Scatter(x=ta_data_part["date"], y=ta_data_part["EMA5"], mode="lines", name="EMA5")
+    ma10 = go.Scatter(x=ta_data_part["date"], y=ta_data_part["EMA10"], mode="lines", name="EMA10")
+    ma20 = go.Scatter(x=ta_data_part["date"], y=ta_data_part["EMA20"], mode="lines", name="EMA20")
+else:
+    ma5 = go.Scatter(x=ta_data_part["date"], y=ta_data_part["SMA5"], mode="lines", name="SMA5")
+    ma10 = go.Scatter(x=ta_data_part["date"], y=ta_data_part["SMA10"], mode="lines", name="SMA10")
+    ma20 = go.Scatter(x=ta_data_part["date"], y=ta_data_part["SMA20"], mode="lines", name="SMA20")
+
+
+candle = go.Candlestick(
+    x=candle_data_part["date"], 
+    open=candle_data_part["open"], 
+    high=candle_data_part["high"], 
+    low=candle_data_part["low"], 
+    close=candle_data_part["close"]
+    )
+
+fig = go.Figure(data=[candle, ma5, ma10, ma20])
+st.plotly_chart(fig)
+
 
 
