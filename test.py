@@ -5,6 +5,7 @@ from ta import add_all_ta_features
 from ta.utils import dropna
 import pandas as pd
 import time
+import requests
 #%%
 
 dl = DataLoader()
@@ -77,7 +78,9 @@ parameter = {
 }
 resp = requests.get(url, params=parameter)
 stock_data = pd.DataFrame(resp.json()["data"])
-stock_id = stock_data["stock_id"].to_list()[:200]
+stock_id = pd.DataFrame(stock_data["stock_id"])
+#%%
+stock_id.to_csv("stock_id.csv")
 #%%
 url = "https://api.finmindtrade.com/api/v4/data"
 def GetData(stock_id):
