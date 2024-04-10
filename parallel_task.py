@@ -88,7 +88,8 @@ def load_new_row_to_db(stock_df_list):
 if __name__ == "__main__":
     result = fetch_all_data()
     result = clear_invalid_data(result)
+    print(result)
     # load_to_db(result)
-    result = filter_date(result, "2022-01-05")
-    load_new_row_to_db(result)
+    # result = filter_date(result, "2022-01-05")
+    # load_new_row_to_db(result)
 
