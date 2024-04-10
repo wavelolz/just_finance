@@ -2,22 +2,26 @@ import time
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import requests
 import pandas as pd
+import numpy as np
 from sqlalchemy import create_engine
+from datetime import datetime, timedelta
 
 def create_stock_id_list():
-    stock_id = pd.read_csv("stock_id.csv")["stock_id"][:60].to_list()
+    stock_id = pd.read_csv("stock_id.csv")["stock_id"][:6].to_list()
     n = len(stock_id)
     size = n // 6 + (1 if n % 6 > 0 else 0)
     stock_id_sublist = [stock_id[i:i+size] for i in range(0, n, size)]
     return stock_id_sublist
 
-def fetch_data(token, stock_id):
-    print(stock_id)
+def fetch_data(token, stock_id, date):
+    print(f"Currently Fetching: {stock_id}")
+    start_date = str(datetime.strptime(date, "%Y-%m-%d")-timedelta(days=5)).split(" ")[0]
+    end_date = str(datetime.strptime(date, "%Y-%m-%d")+timedelta(days=2)).split(" ")[0]
     parameter = {
         "dataset": "TaiwanStockPrice",
         "data_id": f"{stock_id}",
-        "start_date": "2022-01-01",
-        "end_date": "2022-01-05",
+        "start_date": f"{start_date}",
+        "end_date": f"{end_date}",
         "token": f"{token}"
     }
     url = "https://api.finmindtrade.com/api/v4/data"
@@ -26,13 +30,13 @@ def fetch_data(token, stock_id):
     data = pd.DataFrame(data["data"])
     return data
 
-def manage_token(token, stock_list):
+def manage_token(token, stock_list, date):
     result = []
     for stock_id in stock_list:
-        result.append(fetch_data(token, stock_id))
+        result.append(fetch_data(token, stock_id, date))
     return result
 
-def fetch_all_data():
+def fetch_all_data(date):
     stock_list = create_stock_id_list()
     token = [
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRlIjoiMjAyNC0wMy0yMyAxMzo1OTo1MyIsInVzZXJfaWQiOiJ3YXZlbG9sejYiLCJpcCI6IjExMS4yNDIuMTg4LjE5NCJ9.Yt851qpXU_wTmhiYIbQec6nm4Vf8wdhY4mFqUWA6Llg",
@@ -45,12 +49,11 @@ def fetch_all_data():
     result = []
     start = time.time()
     with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(manage_token, token[i], stock_list[i]) for i in range(len(token))]
+        futures = [executor.submit(manage_token, token[i], stock_list[i], date) for i in range(len(token))]
         for future in as_completed(futures):
             result.extend(future.result())
     end = time.time()
-    print(end-start)
-    print(result)
+    print(f"Time Spent: {np.round(end-start)}")
     return result
 
 def clear_invalid_data(stock_df_list):
@@ -83,13 +86,24 @@ def load_new_row_to_db(stock_df_list):
         print(f"{name} inserted successfully")
         time.sleep(1)
 
+def testing_get_date():
+    with open("current_date.txt") as f:
+        for line in f.readlines():
+            date = line
+    current_date = date
+    new_date = str(datetime.strptime(date, '%Y-%m-%d') + timedelta(days=1))
+    new_date = new_date.split(" ")[0]
+    with open("current_date.txt", "w") as f:
+        f.write(new_date)
+    return current_date
 
 
 if __name__ == "__main__":
-    result = fetch_all_data()
+    date = testing_get_date()
+    print(f"Today is {date}")
+    result = fetch_all_data(date)
     result = clear_invalid_data(result)
-    print(result)
     # load_to_db(result)
-    # result = filter_date(result, "2022-01-05")
-    # load_new_row_to_db(result)
+    result = filter_date(result, date)
+    load_new_row_to_db(result)
 
