@@ -113,3 +113,10 @@ payload = {
 resp = requests.get(url, params=payload)
 print(resp.json()["user_count"])  # 使用次數
 print(resp.json()["api_request_limit"])  # api 使用上限
+
+#%%
+with open("../secret_info/finmind_token.txt") as f:
+  token = []
+  for line in f.readlines():
+    token.append(line)
+print(token[1])
