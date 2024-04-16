@@ -13,7 +13,7 @@ def read_token():
             token.append(line)
     return token
 
-def read_password():
+def read_db_info():
     with open("../secret_info/mysql_password.txt") as f:
         for line in f.readlines():
             password = line
@@ -71,8 +71,8 @@ def clear_invalid_data(stock_df_list):
     return result
 
 def load_to_db(stock_df_list):
-    password = read_password()
-    engine = create_engine(f"mysql+mysqlconnector://root:%40{password}@127.0.0.1/test")
+    engine_path = read_db_info()
+    engine = create_engine(f"{engine_path}")
     for stock_df in stock_df_list:
         name = stock_df.iloc[0]['stock_id']
         stock_df.to_sql(name=f"s{name}", con=engine, if_exists="replace", index=False)
@@ -87,8 +87,8 @@ def filter_date(stock_df_list, date):
     return result
 
 def load_new_row_to_db(stock_df_list):
-    password = read_password()
-    engine = create_engine(f"mysql+mysqlconnector://root:%40{password}@127.0.0.1/test")
+    engine_path = read_db_info()
+    engine = create_engine(f"{engine_path}")
     for stock_row in stock_df_list:
         name = stock_row.iloc[0]["stock_id"]
         stock_row.to_sql(name=f"s{name}", con=engine, if_exists="append", index=False)
