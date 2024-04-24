@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 from datetime import datetime, timedelta
+import mysql.connector
 
 def read_token():
     with open("../secret_info/finmind_token.txt") as f:
@@ -20,7 +21,7 @@ def read_db_info():
     return password
 
 def create_stock_id_list():
-    stock_id = pd.read_csv("stock_id.csv")["stock_id"][:6].to_list()
+    stock_id = pd.read_csv("stock_id.csv")["stock_id"][:60].to_list()
     n = len(stock_id)
     size = n // 6 + (1 if n % 6 > 0 else 0)
     stock_id_sublist = [stock_id[i:i+size] for i in range(0, n, size)]
@@ -40,8 +41,11 @@ def fetch_data(token, stock_id, date):
     url = "https://api.finmindtrade.com/api/v4/data"
     resp = requests.get(url, params=parameter)
     data = resp.json()
-    data = pd.DataFrame(data["data"])
-    print(data)
+    try:
+        data = pd.DataFrame(data["data"])
+    except:
+        print(data)
+        print(token)
     return data
 
 def manage_token(token, stock_list, date):
@@ -53,6 +57,8 @@ def manage_token(token, stock_list, date):
 def fetch_all_data(date):
     stock_list = create_stock_id_list()
     token = read_token()
+    token = [i.strip() for i in token]
+    token = [i for i in token if len(i)>0]
     result = []
     start = time.time()
     with ThreadPoolExecutor(max_workers=3) as executor:
@@ -128,13 +134,43 @@ def check_trading_or_not(date):
     else:
         return False
 
+def read_data():
+    config = {
+        "user" : "root",
+        "password" : "@Fk10150305msds",
+        "host" : "127.0.0.1",
+        "database" : "test"
+    }
 
+    cnx = mysql.connector.connect(**config)
+    cursor = cnx.cursor()
+
+    query = """ 
+            select TABLE_NAME as table_name
+            from information_schema.tables
+            where table_schema = 'test';
+            """
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    table_name = pd.DataFrame(rows, columns=[i[0] for i in cursor.description])["table_name"].to_list()
+
+    result = []
+    for i in table_name:
+        query = f"select * from {i}"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        data = pd.DataFrame(rows, columns=[i[0] for i in cursor.description])
+        result.append(data)
+
+    cursor.close()
+    cnx.close()
 
 if __name__ == "__main__":
-    date = testing_get_date()
-    print(f"Today is {date}")
-    print(check_trading_or_not(date))
-    # result = fetch_all_data(date)
+    read_data()
+    # date = testing_get_date()
+    # print(f"Today is {date}")
+    # print(check_trading_or_not(date))
+    # result = fetch_all_data("2020-0101")
     # result = clear_invalid_data(result)
     # load_to_db(result)
     # result = filter_date(result, date)
