@@ -6,6 +6,7 @@ import numpy as np
 from sqlalchemy import create_engine
 from datetime import datetime, timedelta
 import mysql.connector
+import json
 
 def read_token():
     with open("../secret_info/finmind_token.txt") as f:
@@ -134,14 +135,19 @@ def check_trading_or_not(date):
     else:
         return False
 
-def read_data():
-    config = {
-        "user" : "root",
-        "password" : "@Fk10150305msds",
-        "host" : "127.0.0.1",
-        "database" : "test"
-    }
+def load_config(db_name):
+    filename = "../secret_info/config.json"
+    with open(filename, 'r') as file:
+        config = json.load(file)
 
+    if db_name == "raw":
+        return config[0]
+    elif db_name == "test":
+        return config[1]
+
+def read_data():
+    config = load_config("raw")
+        
     cnx = mysql.connector.connect(**config)
     cursor = cnx.cursor()
 
