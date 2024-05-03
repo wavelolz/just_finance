@@ -12,14 +12,27 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import mplfinance as mpf
 import plotly.graph_objects as go
+import os
+import json
 
+def load_config(db_name):
+    dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    config_path = os.path.join(dir_path, "secret_info/config.json")
+    with open(config_path, 'r') as file:
+        config = json.load(file)
 
+    if db_name == "raw":
+        return config[0]
+    elif db_name == "test":
+        return config[1]
+    
 def GetConnection():
+    config = load_config("test")
     db_connection = mysql.connector.connect(
-    host="127.0.0.1",
-    user="root",
-    password="@Fk10150305msds",
-    database="test"
+    host=config["host"],
+    user=config["user"],
+    password=config["password"],
+    database=config["database"]
     )
     return db_connection
 
