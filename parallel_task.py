@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from datetime import datetime, timedelta
 import mysql.connector
 import json
+import os
 
 def read_token():
     with open("../secret_info/finmind_token.txt") as f:
@@ -15,14 +16,20 @@ def read_token():
             token.append(line)
     return token
 
-def read_db_info():
-    with open("../secret_info/mysql_password.txt") as f:
+def read_db_info(mode):
+    info = []
+    dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    mysql_info_path = os.path.join(dir_path, "secret_info\\mysql_connect_info.txt")
+    with open(mysql_info_path) as f:
         for line in f.readlines():
-            password = line
-    return password
+            info.append(line)
+    if mode == "ext":
+        return info[0]
+    elif mode == "load":
+        return info[1]
 
 def create_stock_id_list():
-    stock_id = pd.read_csv("stock_id.csv")["stock_id"][:60].to_list()
+    stock_id = pd.read_csv("stock_id.csv")["stock_id"][:6].to_list()
     n = len(stock_id)
     size = n // 6 + (1 if n % 6 > 0 else 0)
     stock_id_sublist = [stock_id[i:i+size] for i in range(0, n, size)]
@@ -35,18 +42,15 @@ def fetch_data(token, stock_id, date):
     parameter = {
         "dataset": "TaiwanStockPrice",
         "data_id": f"{stock_id}",
-        "start_date": f"{start_date}",
-        "end_date": f"{end_date}",
+        "start_date": f"2010-01-01",
+        "end_date": f"2024-05-02",
         "token": f"{token}"
     }
     url = "https://api.finmindtrade.com/api/v4/data"
     resp = requests.get(url, params=parameter)
     data = resp.json()
-    try:
-        data = pd.DataFrame(data["data"])
-    except:
-        print(data)
-        print(token)
+    data = pd.DataFrame(data["data"])
+    print(data.iloc[-1]['date'])
     return data
 
 def manage_token(token, stock_list, date):
@@ -56,6 +60,7 @@ def manage_token(token, stock_list, date):
     return result
 
 def fetch_all_data(date):
+    date = "2022-06-01"
     stock_list = create_stock_id_list()
     token = read_token()
     token = [i.strip() for i in token]
@@ -77,8 +82,8 @@ def clear_invalid_data(stock_df_list):
             result.append(stock_df)
     return result
 
-def load_to_db(stock_df_list):
-    engine_path = read_db_info()
+def load_to_db(stock_df_list, mode):
+    engine_path = read_db_info(mode)
     engine = create_engine(f"{engine_path}")
     for stock_df in stock_df_list:
         name = stock_df.iloc[0]['stock_id']
@@ -93,8 +98,8 @@ def filter_date(stock_df_list, date):
         result.append(filter_df)
     return result
 
-def load_new_row_to_db(stock_df_list):
-    engine_path = read_db_info()
+def load_new_row_to_db(stock_df_list, mode):
+    engine_path = read_db_info(mode)
     engine = create_engine(f"{engine_path}")
     for stock_row in stock_df_list:
         name = stock_row.iloc[0]["stock_id"]
@@ -122,12 +127,13 @@ def check_trading_or_not(date):
         "data_id": f"2330",
         "start_date": f"{start_date}",
         "end_date": f"{end_date}",
-        "token": f"{token[0]}"
+        # "token": f"{token[0]}"
+        "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRlIjoiMjAyNC0wMy0yMyAxMzo1OTo1MyIsInVzZXJfaWQiOiJ3YXZlbG9sejYiLCJpcCI6IjExMS4yNDIuMTg4LjE5NCJ9.Yt851qpXU_wTmhiYIbQec6nm4Vf8wdhY4mFqUWA6Llg"
     }
     url = "https://api.finmindtrade.com/api/v4/data"
     resp = requests.get(url, params=parameter)
     data = resp.json()
-    data = pd.DataFrame(data["data"])
+    # data = pd.DataFrame(data["data"])
     print(data)
     filter_df = data.loc[data["date"].isin([date])]
     if len(filter_df)>0:
@@ -147,7 +153,7 @@ def load_config(db_name):
 
 def read_data():
     config = load_config("raw")
-        
+
     cnx = mysql.connector.connect(**config)
     cursor = cnx.cursor()
 
@@ -170,15 +176,15 @@ def read_data():
 
     cursor.close()
     cnx.close()
+    return result
 
 if __name__ == "__main__":
-    read_data()
     # date = testing_get_date()
     # print(f"Today is {date}")
     # print(check_trading_or_not(date))
-    # result = fetch_all_data("2020-0101")
-    # result = clear_invalid_data(result)
-    # load_to_db(result)
+    result = fetch_all_data("2020-0101")
+    result = clear_invalid_data(result)
+    load_to_db(result, "ext")
     # result = filter_date(result, date)
-    # load_new_row_to_db(result)
+    # load_new_row_to_db(result, "load")
 
