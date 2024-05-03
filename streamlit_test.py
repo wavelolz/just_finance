@@ -86,47 +86,53 @@ def FilterDate(candle_data, code):
     return filter_candle_data
 
 
-stock_id_l = FetchDatasetList()
 
-option = st.selectbox(
-    "Stock List",
-    stock_id_l
-)
 
-data = FetchData(option)
-data = CleanData(data)
-candle_data_all = PrepareData(data)
 
-genre_duration = st.radio(
-    "請選擇繪圖日期長度",
-    ["1月", "3月", "5月", "1年", "5年", "全部時間"],
-    horizontal=True
+tab_graph, tab_dollar_cost_averaging = st.tabs(["個股走勢", "定期定額實驗"])
+
+with tab_graph:
+    stock_id_l = FetchDatasetList()
+
+    option = st.selectbox(
+        "Stock List",
+        stock_id_l
     )
 
-if genre_duration == '1月':
-    candle_data_part = FilterDate(candle_data_all, 0)
-elif genre_duration == '3月':
-    candle_data_part = FilterDate(candle_data_all, 1)
-elif genre_duration == '5月':
-    candle_data_part = FilterDate(candle_data_all, 2)
-elif genre_duration == '1年':
-    candle_data_part = FilterDate(candle_data_all, 3)
-elif genre_duration == '5年':
-    candle_data_part = FilterDate(candle_data_all, 4)
-else:
-    candle_data_part = FilterDate(candle_data_all, 5)
+    data = FetchData(option)
+    data = CleanData(data)
+    candle_data_all = PrepareData(data)
+    genre_duration = st.radio(
+        "請選擇繪圖日期長度",
+        ["1月", "3月", "5月", "1年", "5年", "全部時間"],
+        horizontal=True
+        )
+
+    if genre_duration == '1月':
+        candle_data_part = FilterDate(candle_data_all, 0)
+    elif genre_duration == '3月':
+        candle_data_part = FilterDate(candle_data_all, 1)
+    elif genre_duration == '5月':
+        candle_data_part = FilterDate(candle_data_all, 2)
+    elif genre_duration == '1年':
+        candle_data_part = FilterDate(candle_data_all, 3)
+    elif genre_duration == '5年':
+        candle_data_part = FilterDate(candle_data_all, 4)
+    else:
+        candle_data_part = FilterDate(candle_data_all, 5)
 
 
-candle = go.Candlestick(
-    x=candle_data_part["date"], 
-    open=candle_data_part["open"], 
-    high=candle_data_part["high"], 
-    low=candle_data_part["low"], 
-    close=candle_data_part["close"]
-    )
+    candle = go.Candlestick(
+        x=candle_data_part["date"], 
+        open=candle_data_part["open"], 
+        high=candle_data_part["high"], 
+        low=candle_data_part["low"], 
+        close=candle_data_part["close"]
+        )
 
-fig = go.Figure(data=candle)
-st.plotly_chart(fig)
+    fig = go.Figure(data=candle)
+    st.plotly_chart(fig)
 
-
+with tab_dollar_cost_averaging:
+    st.header("這裡做定期定額")
 
