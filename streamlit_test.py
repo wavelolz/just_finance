@@ -14,6 +14,7 @@ import mplfinance as mpf
 import plotly.graph_objects as go
 import os
 import json
+import random
 
 
 def load_config(db_name):
@@ -95,15 +96,53 @@ def FilterDate(candle_data, code):
         return candle_data
     return filter_candle_data
 
-data = FetchData("s0050")
-data = CleanData(data)
-candle_data_all = PrepareData(data)
-close_days = ExtractMarketCloseDate(candle_data_all)
+
+def GenerateRandomStockList(start_date):
+    result = {}
+    while len(result) <= 3:
+        stock_id = random.sample(FetchDatasetList(), 1)[0]
+        data = FetchData(stock_id)
+        if data.iloc[0]["date"]<start_date and stock_id not in list(result.keys()):
+            result[f"{stock_id}"] = data
+    return result
+
+def GetDataInterval(data, start_date):
+    end_date = str(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=30))
+    for key in list(data.keys()):
+        full_data = data[f"{key}"]
+        truncated_data = full_data.loc[(full_data["date"] >= start_date) & (full_data["date"] <= end_date)]
+        data[f"{key}"] = truncated_data
+    return data
+
+def ComputeProfit(data, balance):
+    keys = list(data.keys())
+    balance_for_each = balance // len(keys)
+    buy_prices = [data[keys[i]].iloc[0]["open"] for i in range(len(keys))]
+    sell_prices = [data[keys[i]].iloc[-1]["open"] for i in range(len(keys))]
+    profits_per_share = np.array(sell_prices)-np.array(buy_prices)
+    shares = np.array([balance_for_each // buy_prices[i] for i in range(len(buy_prices))])
+    new_balance = np.sum(profits_per_share*shares) + balance
+    print(keys)
+    print(new_balance)
+    print("--------------")
+
+def MonkeySelectStock(start_date, balance):
+    while str(start_date) <= "2024-02-10":
+        full_data = GenerateRandomStockList(str(start_date).split(" ")[0])
+        truncated_data = GetDataInterval(full_data, str(start_date).split(" ")[0])
+        ComputeProfit(truncated_data, balance)
+        start_date += timedelta(days=30)
+
+date = datetime.strptime("2012-05-03", "%Y-%d-%m")
 
 
-tab_graph, tab_dollar_cost_averaging = st.tabs(["個股走勢", "定期定額實驗"])
+tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs(["個股走勢", "定期定額實驗", "隨機選股實驗"])
 
 with tab_graph:
+    data = FetchData("s0050")
+    data = CleanData(data)
+    candle_data_all = PrepareData(data)
+    close_days = ExtractMarketCloseDate(candle_data_all)
     stock_id_l = FetchDatasetList()
 
     option = st.selectbox(
@@ -146,4 +185,7 @@ with tab_graph:
 
 with tab_dollar_cost_averaging:
     st.header("這裡做定期定額")
+
+with tab_random_strategy:
+    st.header("這裡做隨機選股")
 
