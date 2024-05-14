@@ -100,7 +100,7 @@ def FilterDate(candle_data, code):
 
 def GenerateRandomStockList(start_date):
     result = {}
-    while len(result) <= 3:
+    while len(result) <= 4:
         stock_id = random.sample(FetchDatasetList(), 1)[0]
         data = FetchData(stock_id)
         end_date_margin = str(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=45))
@@ -134,22 +134,56 @@ def ComputeProfit(data, balance):
     buy_prices = [FindBuyPrice(data[keys[i]]) for i in range(len(keys))]
     sell_prices = [FindSellPrice(data[keys[i]]) for i in range(len(keys))]
     profits_per_share = np.array(sell_prices)-np.array(buy_prices)
+    profit_ratios = np.round((profits_per_share / np.array(buy_prices))*100, 2)
     shares = np.array([balance_for_each // buy_prices[i] for i in range(len(buy_prices))])
     new_balance = np.sum(profits_per_share*shares) + balance
-    return new_balance
+    return new_balance, profit_ratios
 
 def MonkeySelectStock(start_date, balance):
-    new_balances = []
-    dates = []
+    new_balances = [balance]
+    dates = [start_date]
+    profit_ratioss = []
+    stockss = []
     while str(start_date) <= "2024-02-10":
         full_data = GenerateRandomStockList(str(start_date).split(" ")[0])
         truncated_data = GetDataInterval(full_data, str(start_date).split(" ")[0])
-        new_balance = ComputeProfit(truncated_data, balance)
+        new_balance, profit_ratios = ComputeProfit(truncated_data, balance)
         new_balances.append(new_balance)
+        profit_ratioss.append(profit_ratios)
+        stockss.append(list(full_data.keys()))
         start_date += timedelta(days=30)
         dates.append(start_date)
-    return new_balances, dates
+    return new_balances, dates, profit_ratioss, stockss
 
+def ModifyDetailDf(stockss, profit_ratioss):
+    infoss = []
+    for i in range(len(stockss)):
+        infos = []
+        for j in range(len(stockss[i])):
+            if profit_ratioss[i][j]>0:
+                info = f"<p style='color: red;'>{stockss[i][j]}<br>▲{str(profit_ratioss[i][j])}%</p>"
+            else:
+                info = f"<p style='color: green;'>{stockss[i][j]}<br>▼{str(profit_ratioss[i][j])[1:]}%</p>"
+            infos.append(info)
+        infoss.append(infos)
+    infoss = pd.DataFrame(infoss)
+    colnames = [f"標的{i+1}" for i in range(len(stockss[0]))]
+    infoss.columns = colnames
+    return infoss
+
+css = """
+<style>
+    table {
+        width: 100%;
+        table-layout: fixed;
+        word-wrap: break-word;
+    }
+    th, td {
+        padding: 10px;
+        text-align: left;
+    }
+</style>
+"""
 
 
 tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs(["個股走勢", "定期定額實驗", "隨機選股實驗"])
@@ -209,12 +243,21 @@ with tab_dollar_cost_averaging:
 with tab_random_strategy:
     st.header("這裡做隨機選股")
     if st.button("Click to start"):
-        date = datetime.strptime("2012-05-03", "%Y-%d-%m")
-        new_balances, dates = MonkeySelectStock(date, 100000)
-        df = pd.DataFrame({
+        date = datetime.strptime("2023-05-03", "%Y-%d-%m")
+        new_balances, dates, profit_ratioss, stockss = MonkeySelectStock(date, 100000)
+        df_plot = pd.DataFrame({
             "balance" : new_balances,
             "date" : dates
         })
-        fig = px.line(df, x="date", y="balance", title="Balance of Randomly Selected Stock")
+        fig = px.line(df_plot, x="date", y="balance", title="Balance of Randomly Selected Stock")
         st.plotly_chart(fig)
+        
+        df_detail_info = ModifyDetailDf(stockss, profit_ratioss)
+        df_detail_info["結束日期"] = dates[1:]
+        cols = df_detail_info.columns.to_list()
+        new_column_order = ["結束日期"]
+        for i in range(len(cols[:-1])):
+            new_column_order.append(cols[i])
+        df_detail_info = df_detail_info[new_column_order]
+        st.markdown(css+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
 
