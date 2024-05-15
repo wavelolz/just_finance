@@ -133,6 +133,8 @@ def ComputeProfit(data, balance):
     balance_for_each = balance // len(keys)
     buy_prices = [FindBuyPrice(data[keys[i]]) for i in range(len(keys))]
     sell_prices = [FindSellPrice(data[keys[i]]) for i in range(len(keys))]
+    print(buy_prices)
+    print(sell_prices)
     profits_per_share = np.array(sell_prices)-np.array(buy_prices)
     profit_ratios = np.round((profits_per_share / np.array(buy_prices))*100, 2)
     shares = np.array([balance_for_each // buy_prices[i] for i in range(len(buy_prices))])
@@ -151,10 +153,8 @@ def MonkeySelectStock(start_date, end_date, num_stock, balance):
         truncated_data = GetDataInterval(full_data, str(start_date).split(" ")[0])
 
         full_data_0050 = FetchData("s0050")
-        truncated_data_0050 =  full_data_0050.loc[(full_data_0050["date"] >= str(start_date)) & (full_data_0050["date"] <= end_date)]
-        truncated_data_0050 = {
-            "s0050" : truncated_data_0050
-        }
+        full_data_0050 = {"s0050" : full_data_0050}
+        truncated_data_0050 = GetDataInterval(full_data_0050, str(start_date).split(" ")[0])
 
         balance, profit_ratios = ComputeProfit(truncated_data, balance)
         balance_0050, _ = ComputeProfit(truncated_data_0050, balance_0050)
@@ -197,7 +197,6 @@ css = """
     }
 </style>
 """
-
 
 tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs(["個股走勢", "定期定額實驗", "隨機選股實驗"])
 
