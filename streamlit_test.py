@@ -98,9 +98,9 @@ def FilterDate(candle_data, code):
     return filter_candle_data
 
 
-def GenerateRandomStockList(start_date):
+def GenerateRandomStockList(start_date, num_stock):
     result = {}
-    while len(result) <= 4:
+    while len(result) < num_stock:
         stock_id = random.sample(FetchDatasetList(), 1)[0]
         data = FetchData(stock_id)
         end_date_margin = str(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=45))
@@ -139,13 +139,13 @@ def ComputeProfit(data, balance):
     new_balance = np.sum(profits_per_share*shares) + balance
     return new_balance, profit_ratios
 
-def MonkeySelectStock(start_date, end_date, balance):
+def MonkeySelectStock(start_date, end_date, num_stock, balance):
     new_balances = [balance]
     dates = [start_date]
     profit_ratioss = []
     stockss = []
     while str(start_date) <= end_date:
-        full_data = GenerateRandomStockList(str(start_date).split(" ")[0])
+        full_data = GenerateRandomStockList(str(start_date).split(" ")[0], num_stock)
         truncated_data = GetDataInterval(full_data, str(start_date).split(" ")[0])
         new_balance, profit_ratios = ComputeProfit(truncated_data, balance)
         new_balances.append(new_balance)
@@ -244,10 +244,10 @@ with tab_random_strategy:
     st.header("這裡做隨機選股")
     start_date = st.text_input("起始日期 YYYY-MM-DD")
     end_date = st.text_input("結束日期 YYYY-MM-DD")
-    
+    num_stock = st.selectbox("標的數量", [i+1 for i in range(8)])
     if st.button("Click to start"):
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        new_balances, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, 100000)
+        new_balances, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, num_stock, 100000)
         df_plot = pd.DataFrame({
             "balance" : new_balances,
             "date" : dates
