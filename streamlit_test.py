@@ -136,7 +136,7 @@ def ComputeProfit(data, balance):
     profits_per_share = np.array(sell_prices)-np.array(buy_prices)
     profit_ratios = np.round((profits_per_share / np.array(buy_prices))*100, 2)
     shares = np.array([balance_for_each // buy_prices[i] for i in range(len(buy_prices))])
-    new_balance = np.sum(profits_per_share*shares) + balance
+    new_balance = np.round(np.sum(profits_per_share*shares) + balance, 0)
     return new_balance, profit_ratios
 
 def MonkeySelectStock(start_date, end_date, num_stock, balance):
@@ -147,8 +147,8 @@ def MonkeySelectStock(start_date, end_date, num_stock, balance):
     while str(start_date) <= end_date:
         full_data = GenerateRandomStockList(str(start_date).split(" ")[0], num_stock)
         truncated_data = GetDataInterval(full_data, str(start_date).split(" ")[0])
-        new_balance, profit_ratios = ComputeProfit(truncated_data, balance)
-        new_balances.append(new_balance)
+        balance, profit_ratios = ComputeProfit(truncated_data, balance)
+        new_balances.append(balance)
         profit_ratioss.append(profit_ratios)
         stockss.append(list(full_data.keys()))
         start_date += timedelta(days=30)
