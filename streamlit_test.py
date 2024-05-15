@@ -139,12 +139,12 @@ def ComputeProfit(data, balance):
     new_balance = np.sum(profits_per_share*shares) + balance
     return new_balance, profit_ratios
 
-def MonkeySelectStock(start_date, balance):
+def MonkeySelectStock(start_date, end_date, balance):
     new_balances = [balance]
     dates = [start_date]
     profit_ratioss = []
     stockss = []
-    while str(start_date) <= "2024-02-10":
+    while str(start_date) <= end_date:
         full_data = GenerateRandomStockList(str(start_date).split(" ")[0])
         truncated_data = GetDataInterval(full_data, str(start_date).split(" ")[0])
         new_balance, profit_ratios = ComputeProfit(truncated_data, balance)
@@ -242,9 +242,12 @@ with tab_dollar_cost_averaging:
 
 with tab_random_strategy:
     st.header("這裡做隨機選股")
+    start_date = st.text_input("起始日期 YYYY-MM-DD")
+    end_date = st.text_input("結束日期 YYYY-MM-DD")
+    
     if st.button("Click to start"):
-        date = datetime.strptime("2023-05-03", "%Y-%d-%m")
-        new_balances, dates, profit_ratioss, stockss = MonkeySelectStock(date, 100000)
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        new_balances, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, 100000)
         df_plot = pd.DataFrame({
             "balance" : new_balances,
             "date" : dates
