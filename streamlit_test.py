@@ -144,16 +144,29 @@ def MonkeySelectStock(start_date, end_date, num_stock, balance):
     dates = [start_date]
     profit_ratioss = []
     stockss = []
+    balance_0050 = balance
+    new_balances_0050 = [balance_0050]
     while str(start_date) <= end_date:
         full_data = GenerateRandomStockList(str(start_date).split(" ")[0], num_stock)
         truncated_data = GetDataInterval(full_data, str(start_date).split(" ")[0])
+
+        full_data_0050 = FetchData("s0050")
+        truncated_data_0050 =  full_data_0050.loc[(full_data_0050["date"] >= str(start_date)) & (full_data_0050["date"] <= end_date)]
+        truncated_data_0050 = {
+            "s0050" : truncated_data_0050
+        }
+
         balance, profit_ratios = ComputeProfit(truncated_data, balance)
+        balance_0050, _ = ComputeProfit(truncated_data_0050, balance_0050)
+
         new_balances.append(balance)
+        new_balances_0050.append(balance_0050)
+
         profit_ratioss.append(profit_ratios)
         stockss.append(list(full_data.keys()))
         start_date += timedelta(days=30)
         dates.append(start_date)
-    return new_balances, dates, profit_ratioss, stockss
+    return new_balances, new_balances_0050, dates, profit_ratioss, stockss
 
 def ModifyDetailDf(stockss, profit_ratioss):
     infoss = []
@@ -247,12 +260,14 @@ with tab_random_strategy:
     num_stock = st.selectbox("標的數量", [i+1 for i in range(8)])
     if st.button("Click to start"):
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        new_balances, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, num_stock, 100000)
+        new_balances, new_balances_0050, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, num_stock, 100000)
         df_plot = pd.DataFrame({
             "balance" : new_balances,
+            "balance_0050" : new_balances_0050,
             "date" : dates
         })
-        fig = px.line(df_plot, x="date", y="balance", title="Balance of Randomly Selected Stock")
+
+        fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title="Balance of Randomly Selected Stock")
         st.plotly_chart(fig)
         
         df_detail_info = ModifyDetailDf(stockss, profit_ratioss)
