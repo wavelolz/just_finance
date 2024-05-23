@@ -125,7 +125,7 @@ with tab_random_strategy:
     num_stock = st.selectbox("標的數量", [i+1 for i in range(8)])
     if st.button("Click to start"):
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        new_balances, new_balances_0050, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, num_stock, 100000)
+        new_balances, new_balances_0050, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, num_stock, 100000, key_path)
         df_plot = pd.DataFrame({
             "balance" : new_balances,
             "balance_0050" : new_balances_0050,
