@@ -296,7 +296,6 @@ with tab_dollar_cost_averaging:
     else:
         st.write("No data available for the selected date range.")
 
-
 with tab_random_strategy:
     st.header("這裡做隨機選股")
     start_date = st.text_input("起始日期 YYYY-MM-DD")
