@@ -19,7 +19,7 @@ from etl_process import FetchDatasetList, FetchData, CleanData, ExtractMarketClo
 from random_stock_select import MonkeySelectStock
 
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-key_path = os.path.join(dir_path, "secret_info/stockaroo-privatekey.json")
+key_path = os.path.join(dir_path, "just_finance\stockaroo-privatekey.json")
 
 
 def filter_months(year, min_date, max_date):
