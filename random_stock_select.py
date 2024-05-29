@@ -3,20 +3,39 @@ from datetime import datetime, timedelta
 import random
 import numpy as np
 import os
+import pandas as pd
 
 
-def GenerateRandomStockList(start_date, num_stock, key_path):
+def GenerateRandomStockList(start_date, num_stock, invest_interval, key_path):
     result = {}
-    while len(result) < num_stock:
+    invest_interval_map = {
+        "Month" : 45,
+        "Quarter" : 105,
+        "Year" : 380
+    }
+    while len(result) <= num_stock:
         stock_id = random.sample(FetchDatasetList("stock", key_path), 1)[0]
         data = FetchData("stock", stock_id, key_path)
-        end_date_margin = str(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=45))
+        end_date_margin = str(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=invest_interval_map[f"{invest_interval}"]))
         if data.iloc[0]["date"]<start_date and data.iloc[-1]["date"]>end_date_margin and stock_id not in list(result.keys()):
             result[f"{stock_id}"] = data
     return result
 
-def GetDataInterval(data, start_date):
-    end_date = str(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=30))
+def GenerateAdjustDate(start_date, end_date, invest_interval):
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    if invest_interval == "Month":
+        adjust_date = pd.date_range(start=start_date, end=end_date, freq="MS").strftime("%Y-%m-%d").to_list()
+    elif invest_interval == "Quarter":
+        end_date = end_date + pd.offsets.MonthEnd(1) + timedelta(days=1)
+        adjust_date = pd.date_range(start=start_date, end=end_date, freq="QS").strftime("%Y-%m-%d").to_list()
+    elif invest_interval == "Year":
+        adjust_date = pd.date_range(start=start_date, end=end_date, freq="YS").strftime("%Y-%m-%d").to_list()
+
+    return adjust_date
+
+def GetDataInterval(data, start_date, end_date):
     for key in list(data.keys()):
         full_data = data[f"{key}"]
         truncated_data = full_data.loc[(full_data["date"] >= start_date) & (full_data["date"] <= end_date)]
@@ -46,20 +65,24 @@ def ComputeProfit(data, balance):
     new_balance = np.round(np.sum(profits_per_share*shares) + balance, 0)
     return new_balance, profit_ratios
 
-def MonkeySelectStock(start_date, end_date, num_stock, balance, key_path):
+def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, balance, key_path):
     new_balances = [balance]
-    dates = [start_date]
     profit_ratioss = []
     stockss = []
     balance_0050 = balance
     new_balances_0050 = [balance_0050]
-    while str(start_date) <= end_date:
-        full_data = GenerateRandomStockList(str(start_date).split(" ")[0], num_stock, key_path)
-        truncated_data = GetDataInterval(full_data, str(start_date).split(" ")[0])
+    adjust_dates = GenerateAdjustDate(start_date, end_date, invest_interval)
+    dates = [adjust_dates[0]]
+
+    for i in range(len(adjust_dates)-1):
+        full_data = GenerateRandomStockList(adjust_dates[i], num_stock, invest_interval, key_path)
+        last_day = str(datetime.strptime(adjust_dates[i+1], "%Y-%m-%d")-timedelta(days=1))
+        truncated_data = GetDataInterval(full_data, adjust_dates[i], last_day)
 
         full_data_0050 = FetchData("stock", "s0050", key_path)
         full_data_0050 = {"s0050" : full_data_0050}
-        truncated_data_0050 = GetDataInterval(full_data_0050, str(start_date).split(" ")[0])
+        last_day = str(datetime.strptime(adjust_dates[i+1], "%Y-%m-%d")-timedelta(days=1))
+        truncated_data_0050 = GetDataInterval(full_data_0050, adjust_dates[i], last_day)
 
         balance, profit_ratios = ComputeProfit(truncated_data, balance)
         balance_0050, _ = ComputeProfit(truncated_data_0050, balance_0050)
@@ -69,6 +92,6 @@ def MonkeySelectStock(start_date, end_date, num_stock, balance, key_path):
 
         profit_ratioss.append(profit_ratios)
         stockss.append(list(full_data.keys()))
-        start_date += timedelta(days=30)
-        dates.append(start_date)
+        dates.append(adjust_dates[i+1])
+
     return new_balances, new_balances_0050, dates, profit_ratioss, stockss

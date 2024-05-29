@@ -2,7 +2,7 @@
 import time
 import random
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import calendar
 import json
 
@@ -18,8 +18,8 @@ from google.cloud import firestore
 from etl_process import FetchDatasetList, FetchData, CleanData, ExtractMarketCloseDate
 from random_stock_select import MonkeySelectStock
 
-dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-key_path = os.path.join(dir_path, "just_finance\stockaroo-privatekey.json")
+dir_path = os.path.dirname(os.path.realpath(__file__))
+key_path = os.path.join(dir_path, "stockaroo-privatekey.json")
 
 
 def filter_months(year, min_date, max_date):
@@ -96,9 +96,42 @@ def FilterDate(candle_data, code):
         return candle_data
     return filter_candle_data
 
+def GetValidEndDate():
+    today = date.today()
+    year = today.year
+    month = today.month
+    month -= 1
 
-def ModifyDetailDf(stockss, profit_ratioss):
+    if month<1:
+        year -= 1
+        month = 12
+    return year, month
+
+def GetValidQuarter():
+    year = date.today().year
+    month = date.today().month
+    l = [1, 4, 7, 10]
+    if month<4:
+        year -= 1
+        quarter = 4
+    elif month<7:
+        quarter = 1
+    elif month<10:
+        quarter = 2
+    else:
+        quarter = 3
+    return year, quarter
+
+def GetValidYear():
+    year = date.today().year
+    year -= 1
+    return year
+
+
+def ModifyDetailDf(stockss, profit_ratioss, dates):
     infoss = []
+    date_intervals = [f"{dates[i]} to {str(datetime.strptime(dates[i+1], '%Y-%m-%d')-timedelta(days=1)).split(' ')[0]}" for i in range(len(dates)-1)]
+
     for i in range(len(stockss)):
         infos = []
         for j in range(len(stockss[i])):
@@ -111,7 +144,14 @@ def ModifyDetailDf(stockss, profit_ratioss):
     infoss = pd.DataFrame(infoss)
     colnames = [f"標的{i+1}" for i in range(len(stockss[0]))]
     infoss.columns = colnames
+    cols = infoss.columns
+    infoss["執行期間"] = date_intervals
+    new_column_order = ["執行期間"]
+    for i in range(len(cols[:-1])):
+        new_column_order.append(cols[i])
+    infoss = infoss[new_column_order]
     return infoss
+
 
 css = """
 <style>
@@ -184,15 +224,18 @@ with tab_dollar_cost_averaging:
     MIA = int(user_input)  # Default to 1000 if no input
 
     # Add a select box for the stock code at the top
-    stock_code = st.selectbox("Select Stock Code:", ["2609", "0050", "0052", "0053", "0054"])
+    stock_id_l = FetchDatasetList("stock", key_path)
+    stock_code = st.selectbox("Select Stock Code:", stock_id_l)
 
     # Select duration type: month, quarter, or year
-    duration_type = st.selectbox("Select Duration Type:", ["Month", "Quarter", "Year"])
+    duration_type = st.selectbox("Select Duration Type:", ["Month", "Quarter", "Year"], key="RIPS1")
 
     st.subheader("Select Starting and Ending Date")
     # Load the stock data file based on the selected stock code
-    data = pd.read_csv(f'just_finance/Andy/s{stock_code}.csv')
-    data0050 = pd.read_csv(f'just_finance/Andy/s0050.csv')
+    data = FetchData("stock", stock_code, key_path)
+    data = CleanData(data)
+    data0050 = FetchData("stock", "s0050", key_path)
+    data0050 = CleanData(data0050)
     data['date'] = pd.to_datetime(data['date'])
     data0050['date'] = pd.to_datetime(data0050['date'])
 
@@ -220,29 +263,29 @@ with tab_dollar_cost_averaging:
     years = list(range(min_date.year, max_date.year + 1))
 
     if duration_type == "Month":
-        start_year = st.selectbox("Start Year:", years, index=len(years) - 1)
+        start_year = st.selectbox("Start Year:", years, index=len(years) - 1, key="RIPS3")
         valid_start_months = filter_months(start_year, min_date, max_date)
-        start_month = st.selectbox("Start Month:", valid_start_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
+        start_month = st.selectbox("Start Month:", valid_start_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RIPS2")
 
-        end_year = st.selectbox("End Year:", years, index=len(years) - 1)
+        end_year = st.selectbox("End Year:", years, index=len(years) - 1, key="RIPS4")
         valid_end_months = filter_months(end_year, min_date, max_date)
-        end_month = st.selectbox("End Month:", valid_end_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
+        end_month = st.selectbox("End Month:", valid_end_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RIPS5")
         
     elif duration_type == "Quarter":
-        start_year = st.selectbox("Start Year:", years, index=len(years) - 1)
+        start_year = st.selectbox("Start Year:", years, index=len(years) - 1, key="RIPS3")
         valid_start_quarters = filter_quarters(start_year, min_date, max_date)
-        start_quarter = st.selectbox("Start Quarter:", valid_start_quarters)
+        start_quarter = st.selectbox("Start Quarter:", valid_start_quarters, key="RIPS5")
 
-        end_year = st.selectbox("End Year:", years, index=len(years) - 1)
+        end_year = st.selectbox("End Year:", years, index=len(years) - 1, key="RIPS4")
         valid_end_quarters = filter_quarters(end_year, min_date, max_date)
-        end_quarter = st.selectbox("End Quarter:", valid_end_quarters)
+        end_quarter = st.selectbox("End Quarter:", valid_end_quarters, key="RIPS6")
 
         start_month = quarter_month_map[start_quarter][0]
         end_month = quarter_month_map[end_quarter][1]
 
     elif duration_type == "Year":
-        start_year = st.selectbox("Start Year:", years, index=len(years) - 1)
-        end_year = st.selectbox("End Year:", years, index=len(years) - 1)
+        start_year = st.selectbox("Start Year:", years, index=len(years) - 1, key="RIPS3")
+        end_year = st.selectbox("End Year:", years, index=len(years) - 1, key="RIPS4")
 
         start_month = 1
         end_month = 12
@@ -298,12 +341,79 @@ with tab_dollar_cost_averaging:
 
 with tab_random_strategy:
     st.header("這裡做隨機選股")
-    start_date = st.text_input("起始日期 YYYY-MM-DD")
-    end_date = st.text_input("結束日期 YYYY-MM-DD")
-    num_stock = st.selectbox("標的數量", [i+1 for i in range(8)])
+    duration_type = st.selectbox("Select Duration Type:", ["Month", "Quarter", "Year"], key="RSS1")
+
+
+    if duration_type == "Month":
+        valid_year, valid_month = GetValidEndDate()
+        years = list(np.arange(2011, valid_year+1))
+        months = list(np.arange(1, 13, 1))
+        start_year = st.selectbox("Start Year:", years, key="RSS3")
+        if start_year == valid_year:
+            months_select = months[:valid_month+1]
+        else:
+            months_select = months
+        start_month = st.selectbox("Start Month:", months_select, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RSS2")
+        start_date = f"{start_year}-{str(start_month).zfill(2)}"
+
+        end_year = st.selectbox("End Year:", years, key="RSS4")
+        if end_year == valid_year:
+            months_select = months[:valid_month]
+        else:
+            months_select = months
+        end_month = st.selectbox("End Month:", months_select, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RSS5")
+
+        if end_month == 12:
+            end_year += 1
+            end_month = 1
+        end_month += 1
+        end_date = f"{end_year}-{str(end_month).zfill(2)}"
+    elif duration_type == "Quarter":
+        quarter_month_map = {
+        "Q1": (1, 3),
+        "Q2": (4, 6),
+        "Q3": (7, 9),
+        "Q4": (10, 12)
+        }
+        valid_year, valid_quarter = GetValidQuarter()
+        years = list(np.arange(2011, valid_year+1))
+        quarters = ["Q1", "Q2", "Q3", "Q4"]
+        start_year = st.selectbox("Start Year:", years, key="RSS3")
+        if start_year == valid_year:
+            quarters_select = quarters[:valid_quarter]
+        else:
+            quarters_select = quarters
+        start_quarter = st.selectbox("Start Quarter:", quarters_select, key="RSS5")
+        start_month = quarter_month_map[start_quarter][0]
+        start_date = f"{start_year}-{str(start_month).zfill(2)}"
+
+        end_year = st.selectbox("End Year:", years, key="RSS4")
+        if end_year == valid_year:
+            quarters_select = quarters[:valid_quarter]
+        else:
+            quarters_select = quarters
+        end_quarter = st.selectbox("End Quarter:", quarters_select, key="RSS6")
+        end_month = quarter_month_map[end_quarter][1]
+        end_date = f"{end_year}-{str(end_month).zfill(2)}"
+    elif duration_type == "Year":
+        valid_year = GetValidYear()
+        years = list(np.arange(2011, valid_year+1))
+        start_year = st.selectbox("Start Year:", years, key="RSS3")
+        start_month = "01"
+        start_date = f"{start_year}-{str(start_month).zfill(2)}"
+
+        end_year = st.selectbox("End Year:", years, key="RSS4")
+        end_month = "01"
+        end_date = f"{end_year+1}-{str(end_month).zfill(2)}"
+
+
+
+
+
+    num_stock = st.selectbox("標的數量", [i+1 for i in range(5)])
+
     if st.button("Click to start"):
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        new_balances, new_balances_0050, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, num_stock, 100000, key_path)
+        new_balances, new_balances_0050, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, duration_type, num_stock, 100000, key_path)
         df_plot = pd.DataFrame({
             "balance" : new_balances,
             "balance_0050" : new_balances_0050,
@@ -313,12 +423,6 @@ with tab_random_strategy:
         fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title="Balance of Randomly Selected Stock")
         st.plotly_chart(fig)
         
-        df_detail_info = ModifyDetailDf(stockss, profit_ratioss)
-        df_detail_info["結束日期"] = dates[1:]
-        cols = df_detail_info.columns.to_list()
-        new_column_order = ["結束日期"]
-        for i in range(len(cols[:-1])):
-            new_column_order.append(cols[i])
-        df_detail_info = df_detail_info[new_column_order]
+        df_detail_info = ModifyDetailDf(stockss, profit_ratioss, dates)
         st.markdown(css+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
 
