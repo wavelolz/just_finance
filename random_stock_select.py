@@ -13,9 +13,11 @@ def GenerateRandomStockList(start_date, num_stock, invest_interval, key_path):
         "Quarter" : 105,
         "Year" : 380
     }
-    while len(result) <= num_stock:
-        stock_id = random.sample(FetchDatasetList("stock", key_path), 1)[0]
+    stocks = FetchDatasetList("stock", key_path)
+    while len(result) < num_stock:
+        stock_id = random.sample(stocks, 1)[0]
         data = FetchData("stock", stock_id, key_path)
+        print(data)
         end_date_margin = str(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=invest_interval_map[f"{invest_interval}"]))
         if data.iloc[0]["date"]<start_date and data.iloc[-1]["date"]>end_date_margin and stock_id not in list(result.keys()):
             result[f"{stock_id}"] = data

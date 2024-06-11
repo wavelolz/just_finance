@@ -1,10 +1,6 @@
 # Standard library imports
-import time
-import random
 import os
 from datetime import datetime, timedelta, date
-import calendar
-import json
 
 # Third-party library imports
 import streamlit as st
@@ -12,148 +8,17 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from google.cloud import firestore
 
 # Custom module imports
 from etl_process import FetchDatasetList, FetchData, CleanData, ExtractMarketCloseDate
 from random_stock_select import MonkeySelectStock
+from regular_investment_plan import FilterMonths, FilterQuarters, CalculateInvestmentReturns
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-key_path = os.path.join(dir_path, "stockaroo-privatekey.json")
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+KEY_PATH = os.path.join(DIR_PATH, "secret_info/stockaroo-privatekey.json")
 
-
-def filter_months(year, min_date, max_date):
-    months = list(range(1, 13))
-    if year == min_date.year and year == max_date.year:
-        return list(range(min_date.month, max_date.month + 1))
-    elif year == min_date.year:
-        return list(range(min_date.month, 13))
-    elif year == max_date.year:
-        return list(range(1, max_date.month + 1))
-    else:
-        return months
-
-def filter_quarters(year, min_date, max_date):
-    quarter_month_map = {
-    "Q1": (1, 3),
-    "Q2": (4, 6),
-    "Q3": (7, 9),
-    "Q4": (10, 12)
-    }
-    valid_quarters = []
-    for quarter, (start_month, end_month) in quarter_month_map.items():
-        if ((year == min_date.year and end_month >= min_date.month) or year > min_date.year) and \
-           ((year == max_date.year and start_month <= max_date.month) or year < max_date.year):
-            valid_quarters.append(quarter)
-    return valid_quarters
-
-def calculate_investment_returns(filtered_data, duration_type, MIA=1000):
-    if not filtered_data.empty:
-        if duration_type == "Month":
-            group_cols = ['year', 'month']
-        elif duration_type == "Quarter":
-            group_cols = ['year', 'quarter']
-        elif duration_type == "Year":
-            group_cols = ['year']
-        
-        first_days = filtered_data.groupby(group_cols).first().reset_index(drop=True)
-        last_days = filtered_data.groupby(group_cols).last().reset_index(drop=True)
-        
-        # Initialize variables to store results
-        durations = np.arange(len(first_days)) + 1  # Durations from 0 to the number of periods - 1
-
-        # Calculate cumulative stock bought for each period
-        opening_prices = first_days['open'].values
-        closing_prices = last_days['close'].values
-
-        cumulative_stock = np.cumsum(MIA / opening_prices)
-        cost = np.cumsum([MIA] * len(opening_prices))
-        revenue = np.round(cumulative_stock * closing_prices, 2)
-
-        # Calculate the invested amount for each period
-        invested_amounts = MIA * (durations)
-
-        # Calculate profit ratios
-        ROI = np.round((revenue - invested_amounts) / invested_amounts * 100, 2)
-        
-        # Return the results as a list of lists
-        return [durations.tolist(), cost.tolist(), revenue.tolist(), ROI.tolist()]
-    else:
-        return [[], [], [], []]  # Return empty lists if filtered_data is empty
-
-def FilterDate(candle_data, code):
-    if code == 0:
-        filter_candle_data = candle_data[-30:]
-    elif code == 1:
-        filter_candle_data = candle_data[-90:]
-    elif code == 2:
-        filter_candle_data = candle_data[-150:]
-    elif code == 3:
-        filter_candle_data = candle_data[-365:]
-    elif code == 4:
-        filter_candle_data = candle_data[-1825:]
-    else:
-        return candle_data
-    return filter_candle_data
-
-def GetValidEndDate():
-    today = date.today()
-    year = today.year
-    month = today.month
-    month -= 1
-
-    if month<1:
-        year -= 1
-        month = 12
-    return year, month
-
-def GetValidQuarter():
-    year = date.today().year
-    month = date.today().month
-    l = [1, 4, 7, 10]
-    if month<4:
-        year -= 1
-        quarter = 4
-    elif month<7:
-        quarter = 1
-    elif month<10:
-        quarter = 2
-    else:
-        quarter = 3
-    return year, quarter
-
-def GetValidYear():
-    year = date.today().year
-    year -= 1
-    return year
-
-
-def ModifyDetailDf(stockss, profit_ratioss, dates):
-    infoss = []
-    date_intervals = [f"{dates[i]} to {str(datetime.strptime(dates[i+1], '%Y-%m-%d')-timedelta(days=1)).split(' ')[0]}" for i in range(len(dates)-1)]
-
-    for i in range(len(stockss)):
-        infos = []
-        for j in range(len(stockss[i])):
-            if profit_ratioss[i][j]>0:
-                info = f"<p style='color: red;'>{stockss[i][j]}<br>▲{str(profit_ratioss[i][j])}%</p>"
-            else:
-                info = f"<p style='color: green;'>{stockss[i][j]}<br>▼{str(profit_ratioss[i][j])[1:]}%</p>"
-            infos.append(info)
-        infoss.append(infos)
-    infoss = pd.DataFrame(infoss)
-    colnames = [f"標的{i+1}" for i in range(len(stockss[0]))]
-    infoss.columns = colnames
-    cols = infoss.columns
-    infoss["執行期間"] = date_intervals
-    new_column_order = ["執行期間"]
-    for i in range(len(cols[:-1])):
-        new_column_order.append(cols[i])
-    infoss = infoss[new_column_order]
-    return infoss
-
-
-css = """
+# Used for the data frame in random stock selection experiment
+CSS = """
 <style>
     table {
         width: 100%;
@@ -167,50 +32,171 @@ css = """
 </style>
 """
 
+def filter_date(data, code):
+    """
+    Filter stock data based within specific date range
+    
+    Args:
+        data (dataframe): The data frame of stock data.
+        code (int): The code indicating the date range of data to filter.
+    
+    Returns:
+        dataframe: The filtered stock data or the original data if the the date range indicates
+        all available dates
+    """
+    code_day_map = {
+        0: 30,
+        1: 90,
+        2: 150,
+        3: 365,
+        4: 1825
+    }
+    if code in code_day_map:
+        return data[-code_day_map[code]:]
+    
+    return data
+
+def get_valid_end_month():
+    """
+    Get the valid end month for date range available.
+    
+    Returns:
+        tuple: A tuple containing the year and the valid month.
+    """
+    today = date.today()
+    year = today.year
+    month = today.month - 1
+
+    if month<1:
+        year -= 1
+        month = 12
+    return year, month
+
+def get_valid_end_quarter():
+    """
+    Get the valid end quarter for date range available.
+    
+    Returns:
+        tuple: A tuple containing the year and the valid quarter.
+    """
+    today = date.today()
+    year = today.year
+    month = today.month
+
+    if month<4:
+        year -= 1
+        quarter = 4
+    elif month<7:
+        quarter = 1
+    elif month<10:
+        quarter = 2
+    else:
+        quarter = 3
+    return year, quarter
+
+def get_valid_end_year():
+    """
+    Get the valid end year for date range available.
+    
+    Returns:
+        tuple: A tuple containing the valid year.
+    """
+    year = date.today().year
+    year -= 1
+    return year
+
+
+def modify_detail_df(stocks_group, profit_ratios_group, dates):
+    """
+    Format detailed stock data for display.
+    
+    Args:
+        stock_groups (list): List of lists containing stock symbols.
+        profit_ratio_groups (list): List of lists containing profit ratios for each stock.
+        dates (list): List of dates for the date intervals.
+    
+    Returns:
+        pd.DataFrame: DataFrame containing formatted stock details with execution periods.
+    """
+
+    # Create date intervals for the data frame
+    date_intervals = [
+        f"{dates[i]} to {str(datetime.strptime(dates[i+1], '%Y-%m-%d')-timedelta(days=1)).split(' ')[0]}" 
+        for i in range(len(dates)-1)
+        ]
+
+    # Create formatted information for each stock
+    formatted_infos = []
+    for stocks, profits in zip(stocks_group, profit_ratios_group):
+        info_list = [
+            f"<p style='color: red;'>{stock}<br>▲{profit}%</p>" if profit > 0 else f"<p style='color: green;'>{stock}<br>▼{str(profit)[1:]}%</p>"
+            for stock, profit in zip(stocks, profits)
+        ]
+        formatted_infos.append(info_list)
+
+    info_df = pd.DataFrame(formatted_infos)
+
+    # Set column names for stocks
+    info_df.columns = [f"標的{i+1}" for i in range(len(stocks_group[0]))]
+
+    # Add date intervals as a new column
+    info_df["執行期間"] = date_intervals
+
+    # Reorder columns to place "執行期間" at the front
+    columns = ["執行期間"] + [f"標的{i+1}" for i in range(len(stocks_group[0]))]
+    info_df = info_df[columns]
+
+    return info_df
+
+
 tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs(["個股走勢", "定期定額實驗", "隨機選股實驗"])
 
 with tab_graph:
-    stock_id_l = FetchDatasetList("stock", key_path)
+    # Fetch the list of stock IDs
+    stock_id_list = FetchDatasetList("stock", KEY_PATH)
 
-    option = st.selectbox(
-        "Stock List",
-        stock_id_l
+    # Select a stock from the list
+    selected_stock = st.selectbox("Stock List", stock_id_list)
+
+    # Fetch and clean data for the selected stock
+    raw_data = FetchData("stock", selected_stock, KEY_PATH)
+    cleaned_data = CleanData(raw_data)
+    market_close_dates = ExtractMarketCloseDate(cleaned_data)
+    
+    # Map the duration to filter codes
+    duration_map = {
+        "1月": 0,
+        "3月": 1,
+        "5月": 2,
+        "1年": 3,
+        "5年": 4,
+        "全部時間": 5
+    }
+
+    # Select the duration for plotting
+    selected_duration = st.radio(
+        "請選擇繪圖日期長度",
+        list(duration_map.keys()),
+        horizontal=True
     )
 
-    data = FetchData("stock", option, key_path)
-    data_all = CleanData(data)
-    close_days = ExtractMarketCloseDate(data_all)
-    
+    # Filter data based on the selected duration
+    filter_code = duration_map[selected_duration]
+    filtered_data = filter_date(cleaned_data, filter_code)
 
-    
-    genre_duration = st.radio(
-        "請選擇繪圖日期長度",
-        ["1月", "3月", "5月", "1年", "5年", "全部時間"],
-        horizontal=True
-        )
-
-    if genre_duration == '1月':
-        data_part = FilterDate(data_all, 0)
-    elif genre_duration == '3月':
-        data_part = FilterDate(data_all, 1)
-    elif genre_duration == '5月':
-        data_part = FilterDate(data_all, 2)
-    elif genre_duration == '1年':
-        data_part = FilterDate(data_all, 3)
-    elif genre_duration == '5年':
-        data_part = FilterDate(data_all, 4)
-    else:
-        data_part = FilterDate(data_all, 5)
-
-    line = go.Scatter(
-        x=data_part["date"],
-        y=data_part["close"],
+    # Create the line plot
+    line_plot = go.Scatter(
+        x=filtered_data["date"],
+        y=filtered_data["close"],
         mode="lines"
     )
     fig = go.Figure()
-    fig.add_trace(line)
-    
-    fig.update_xaxes(rangebreaks=[dict(values=close_days)])
+    fig.add_trace(line_plot)
+
+    # Update the x-axis to exclude market close dates
+    fig.update_xaxes(rangebreaks=[dict(values=market_close_dates)])
+
+    # Display the plot
     st.plotly_chart(fig, use_container_width=True)
 
 with tab_dollar_cost_averaging:
@@ -224,7 +210,7 @@ with tab_dollar_cost_averaging:
     MIA = int(user_input)  # Default to 1000 if no input
 
     # Add a select box for the stock code at the top
-    stock_id_l = FetchDatasetList("stock", key_path)
+    stock_id_l = FetchDatasetList("stock", KEY_PATH)
     stock_code = st.selectbox("Select Stock Code:", stock_id_l)
 
     # Select duration type: month, quarter, or year
@@ -232,9 +218,9 @@ with tab_dollar_cost_averaging:
 
     st.subheader("Select Starting and Ending Date")
     # Load the stock data file based on the selected stock code
-    data = FetchData("stock", stock_code, key_path)
+    data = FetchData("stock", stock_code, KEY_PATH)
     data = CleanData(data)
-    data0050 = FetchData("stock", "s0050", key_path)
+    data0050 = FetchData("stock", "s0050", KEY_PATH)
     data0050 = CleanData(data0050)
     data['date'] = pd.to_datetime(data['date'])
     data0050['date'] = pd.to_datetime(data0050['date'])
@@ -264,20 +250,20 @@ with tab_dollar_cost_averaging:
 
     if duration_type == "Month":
         start_year = st.selectbox("Start Year:", years, index=len(years) - 1, key="RIPS3")
-        valid_start_months = filter_months(start_year, min_date, max_date)
+        valid_start_months = FilterMonths(start_year, min_date, max_date)
         start_month = st.selectbox("Start Month:", valid_start_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RIPS2")
 
         end_year = st.selectbox("End Year:", years, index=len(years) - 1, key="RIPS4")
-        valid_end_months = filter_months(end_year, min_date, max_date)
+        valid_end_months = FilterMonths(end_year, min_date, max_date)
         end_month = st.selectbox("End Month:", valid_end_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RIPS5")
         
     elif duration_type == "Quarter":
         start_year = st.selectbox("Start Year:", years, index=len(years) - 1, key="RIPS3")
-        valid_start_quarters = filter_quarters(start_year, min_date, max_date)
+        valid_start_quarters = FilterQuarters(start_year, min_date, max_date)
         start_quarter = st.selectbox("Start Quarter:", valid_start_quarters, key="RIPS5")
 
         end_year = st.selectbox("End Year:", years, index=len(years) - 1, key="RIPS4")
-        valid_end_quarters = filter_quarters(end_year, min_date, max_date)
+        valid_end_quarters = FilterQuarters(end_year, min_date, max_date)
         end_quarter = st.selectbox("End Quarter:", valid_end_quarters, key="RIPS6")
 
         start_month = quarter_month_map[start_quarter][0]
@@ -301,8 +287,8 @@ with tab_dollar_cost_averaging:
         filtered_data = data.loc[(data['date'] >= start_date) & (data['date'] <= end_date)].copy()
         filtered_data0050 = data0050.loc[(data0050['date'] >= start_date) & (data0050['date'] <= end_date)].copy()
 
-        duration, cost, revenue, ROI = calculate_investment_returns(filtered_data, duration_type, MIA)
-        _, _, _, ROI0050 = calculate_investment_returns(filtered_data0050, duration_type, MIA)
+        duration, cost, revenue, ROI = CalculateInvestmentReturns(filtered_data, duration_type, MIA)
+        _, _, _, ROI0050 = CalculateInvestmentReturns(filtered_data0050, duration_type, MIA)
 
         if duration_type == "Month":
             duration_label = 'Duration (Months)'
@@ -341,33 +327,27 @@ with tab_dollar_cost_averaging:
 
 with tab_random_strategy:
     st.header("這裡做隨機選股")
+
+    # Select the duration type
     duration_type = st.selectbox("Select Duration Type:", ["Month", "Quarter", "Year"], key="RSS1")
 
 
     if duration_type == "Month":
-        valid_year, valid_month = GetValidEndDate()
+        valid_year, valid_month = get_valid_end_month()
+
+        # Select start year and month
         years = list(np.arange(2011, valid_year+1))
-        months = list(np.arange(1, 13, 1))
         start_year = st.selectbox("Start Year:", years, key="RSS3")
-        if start_year == valid_year:
-            months_select = months[:valid_month+1]
-        else:
-            months_select = months
+        months_select = list(range(1, 13 if start_year != valid_year else valid_month + 1))
         start_month = st.selectbox("Start Month:", months_select, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RSS2")
         start_date = f"{start_year}-{str(start_month).zfill(2)}"
 
+        # Select end year and month
         end_year = st.selectbox("End Year:", years, key="RSS4")
-        if end_year == valid_year:
-            months_select = months[:valid_month]
-        else:
-            months_select = months
+        months_select = list(range(1, 13 if end_year != valid_year else valid_month))
         end_month = st.selectbox("End Month:", months_select, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RSS5")
+        end_date = f"{end_year + (1 if end_month == 12 else 0)}-{str(end_month%12 + 1).zfill(2)}"
 
-        if end_month == 12:
-            end_year += 1
-            end_month = 1
-        end_month += 1
-        end_date = f"{end_year}-{str(end_month).zfill(2)}"
     elif duration_type == "Quarter":
         quarter_month_map = {
         "Q1": (1, 3),
@@ -375,54 +355,53 @@ with tab_random_strategy:
         "Q3": (7, 9),
         "Q4": (10, 12)
         }
-        valid_year, valid_quarter = GetValidQuarter()
+        valid_year, valid_quarter = get_valid_end_quarter()
+
+        # Select start year and quarter
         years = list(np.arange(2011, valid_year+1))
-        quarters = ["Q1", "Q2", "Q3", "Q4"]
-        start_year = st.selectbox("Start Year:", years, key="RSS3")
-        if start_year == valid_year:
-            quarters_select = quarters[:valid_quarter]
-        else:
-            quarters_select = quarters
+        quarters_select = ["Q1", "Q2", "Q3", "Q4"][:valid_quarter if start_year == valid_year else 4]
         start_quarter = st.selectbox("Start Quarter:", quarters_select, key="RSS5")
         start_month = quarter_month_map[start_quarter][0]
         start_date = f"{start_year}-{str(start_month).zfill(2)}"
 
+        # Select end year and quarter
         end_year = st.selectbox("End Year:", years, key="RSS4")
-        if end_year == valid_year:
-            quarters_select = quarters[:valid_quarter]
-        else:
-            quarters_select = quarters
+        quarters_select = ["Q1", "Q2", "Q3", "Q4"][:valid_quarter if end_year == valid_year else 4]
         end_quarter = st.selectbox("End Quarter:", quarters_select, key="RSS6")
         end_month = quarter_month_map[end_quarter][1]
         end_date = f"{end_year}-{str(end_month).zfill(2)}"
+
     elif duration_type == "Year":
-        valid_year = GetValidYear()
+        valid_year = get_valid_end_year()
         years = list(np.arange(2011, valid_year+1))
+
+        # Select start year
         start_year = st.selectbox("Start Year:", years, key="RSS3")
-        start_month = "01"
-        start_date = f"{start_year}-{str(start_month).zfill(2)}"
+        start_date = f"{start_year}-01"
 
+        # Select end year
         end_year = st.selectbox("End Year:", years, key="RSS4")
-        end_month = "01"
-        end_date = f"{end_year+1}-{str(end_month).zfill(2)}"
+        end_date = f"{end_year+1}-01"
 
-
-
-
-
+    # Select number of stocks 
     num_stock = st.selectbox("標的數量", [i+1 for i in range(5)])
 
     if st.button("Click to start"):
-        new_balances, new_balances_0050, dates, profit_ratioss, stockss = MonkeySelectStock(start_date, end_date, duration_type, num_stock, 100000, key_path)
+        new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
+            start_date, end_date, duration_type, num_stock, 100000, KEY_PATH
+        )
+
         df_plot = pd.DataFrame({
             "balance" : new_balances,
             "balance_0050" : new_balances_0050,
             "date" : dates
         })
 
+        # Plot the balance over time
         fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title="Balance of Randomly Selected Stock")
         st.plotly_chart(fig)
         
-        df_detail_info = ModifyDetailDf(stockss, profit_ratioss, dates)
-        st.markdown(css+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
+        # Displayed detailed information
+        df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates)
+        st.markdown(CSS+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
 

@@ -1,3 +1,4 @@
+#%%
 import time
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import requests
@@ -8,18 +9,16 @@ from datetime import datetime, timedelta
 import mysql.connector
 import json
 import os
+from proxy_requests.proxy_requests import ProxyRequests
 
 def read_token():
-    with open("../secret_info/finmind_token.txt") as f:
-        token = []
-        for line in f.readlines():
-            token.append(line)
+    with open("secret_info/finmind_token.txt") as f:
+        token = f.readline()
     return token
 
 def read_db_info(mode):
     info = []
-    dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    mysql_info_path = os.path.join(dir_path, "secret_info\\mysql_connect_info.txt")
+    mysql_info_path = "secret_info/mysql_connect_info.txt"
     with open(mysql_info_path) as f:
         for line in f.readlines():
             info.append(line)
@@ -28,51 +27,55 @@ def read_db_info(mode):
     elif mode == "load":
         return info[1]
 
-def create_stock_id_list():
-    stock_id = pd.read_csv("stock_id.csv")["stock_id"][:6].to_list()
-    n = len(stock_id)
-    size = n // 6 + (1 if n % 6 > 0 else 0)
-    stock_id_sublist = [stock_id[i:i+size] for i in range(0, n, size)]
-    return stock_id_sublist
-
-def fetch_data(token, stock_id, date):
+def fetch_data(token, stock_id, start_date, end_date):
     print(f"Currently Fetching: {stock_id}")
-    start_date = str(datetime.strptime(date, "%Y-%m-%d")-timedelta(days=5)).split(" ")[0]
-    end_date = str(datetime.strptime(date, "%Y-%m-%d")+timedelta(days=2)).split(" ")[0]
     parameter = {
         "dataset": "TaiwanStockPrice",
         "data_id": f"{stock_id}",
-        "start_date": f"2010-01-01",
-        "end_date": f"2024-05-02",
+        "start_date": f"{start_date}",
+        "end_date": f"{end_date}",
         "token": f"{token}"
     }
     url = "https://api.finmindtrade.com/api/v4/data"
-    resp = requests.get(url, params=parameter)
+    resp = requests.get(url, parameter)
     data = resp.json()
+    status = data["status"]
     data = pd.DataFrame(data["data"])
-    print(data.iloc[-1]['date'])
-    return data
+    data = data[["date", "open", "close"]]
+    
+    return data, status
 
-def manage_token(token, stock_list, date):
+def manage_token(token, stock_list, start_date, end_date):
     result = []
     for stock_id in stock_list:
-        result.append(fetch_data(token, stock_id, date))
+        while True:
+            try:
+                data, status = fetch_data(token, stock_id, start_date, end_date)
+                if int(status) != 402:
+                    stock_data_dict = {f"{stock_id}" : data}
+                    result.append(stock_data_dict)
+                    time.sleep(6.1)
+                    break
+                else:
+                    print("Upper Limit reached, resting...")
+                    time.sleep(1800)
+            except KeyError:
+                print(f"Invalid stock data: {stock_id}")
+                break
+            except ConnectionAbortedError:
+                print("Encountering connection error, press Enter to continue")
+                input()
+            except ConnectionError:
+                print("Encountering connection error, press Enter to continue")
+                input()
+
+
     return result
 
-def fetch_all_data(date):
-    date = "2022-06-01"
-    stock_list = create_stock_id_list()
+def fetch_all_data(start_date, end_date):
+    stock_list = pd.read_excel("unique_stock_data_corrected.xlsx")["stock_id"].to_list()[2000:]
     token = read_token()
-    token = [i.strip() for i in token]
-    token = [i for i in token if len(i)>0]
-    result = []
-    start = time.time()
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(manage_token, token[i], stock_list[i], date) for i in range(len(token))]
-        for future in as_completed(futures):
-            result.extend(future.result())
-    end = time.time()
-    print(f"Time Spent: {np.round(end-start)}")
+    result = manage_token(token, stock_list, start_date, end_date)
     return result
 
 def clear_invalid_data(stock_df_list):
@@ -86,10 +89,10 @@ def load_to_db(stock_df_list, mode):
     engine_path = read_db_info(mode)
     engine = create_engine(f"{engine_path}")
     for stock_df in stock_df_list:
-        name = stock_df.iloc[0]['stock_id']
-        stock_df.to_sql(name=f"s{name}", con=engine, if_exists="replace", index=False)
-        print(f"{name} loaded successfully")
-        time.sleep(1)
+        for key, val in stock_df.items():
+            val.to_sql(name=f"s{key}", con=engine, if_exists="replace", index=False)
+            print(f"{key} loaded successfully")
+            time.sleep(1)
 
 def filter_date(stock_df_list, date):
     result = []
@@ -177,14 +180,17 @@ def read_data():
     cursor.close()
     cnx.close()
     return result
+#%%
+result1 = fetch_all_data("2011-01-01", "2024-05-01")
 
-if __name__ == "__main__":
-    # date = testing_get_date()
-    # print(f"Today is {date}")
-    # print(check_trading_or_not(date))
-    result = fetch_all_data("2020-0101")
-    result = clear_invalid_data(result)
-    load_to_db(result, "ext")
-    # result = filter_date(result, date)
-    # load_new_row_to_db(result, "load")
+#%%
+result2 = fetch_all_data("2011-01-01", "2024-05-01")
 
+#%%
+result3 = fetch_all_data("2011-01-01", "2024-05-01")
+
+#%%
+result4 = fetch_all_data("2011-01-01", "2024-05-01")
+#%%
+result4 = clear_invalid_data(result4)
+load_to_db(result4, "ext")
