@@ -27,6 +27,17 @@ def FetchData(collection_name, stock_id, key_path):
     return df
 
 @st.cache_data
+def FetchDateMargin(key_path):
+    db = firestore.Client.from_service_account_json(key_path)
+    doc_ref = db.collection("date_margin").document("date_margin_data")
+    doc = doc_ref.get()
+    data = doc.to_dict()
+    df = pd.DataFrame.from_dict(data, orient="index")
+    df.reset_index(inplace=True)
+    df.rename(columns={"index" : "id"}, inplace=True)
+    return df
+
+@st.cache_data
 def CleanData(data):
     filter_data = data.loc[data["close"] != 0]
     return filter_data

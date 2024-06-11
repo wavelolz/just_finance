@@ -1,4 +1,4 @@
-from etl_process import FetchDatasetList, FetchData
+from etl_process import FetchDatasetList, FetchData, FetchDateMargin
 from datetime import datetime, timedelta
 import random
 import numpy as np
@@ -14,13 +14,16 @@ def GenerateRandomStockList(start_date, num_stock, invest_interval, key_path):
         "Year" : 380
     }
     stocks = FetchDatasetList("stock", key_path)
+    date_margin = FetchDateMargin(key_path)
     while len(result) < num_stock:
         stock_id = random.sample(stocks, 1)[0]
-        data = FetchData("stock", stock_id, key_path)
-        print(data)
         end_date_margin = str(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=invest_interval_map[f"{invest_interval}"]))
-        if data.iloc[0]["date"]<start_date and data.iloc[-1]["date"]>end_date_margin and stock_id not in list(result.keys()):
+        real_data_start_date = date_margin.loc[date_margin["id"] == stock_id]["s"].values[0]
+        real_data_end_date = date_margin.loc[date_margin["id"] == stock_id]["e"].values[0]
+        if real_data_start_date<start_date and real_data_end_date>end_date_margin and stock_id not in list(result.keys()):
+            data = FetchData("stock", stock_id, key_path)
             result[f"{stock_id}"] = data
+            print(data)
     return result
 
 def GenerateAdjustDate(start_date, end_date, invest_interval):
