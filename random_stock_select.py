@@ -23,7 +23,6 @@ def GenerateRandomStockList(start_date, num_stock, invest_interval, key_path):
         if real_data_start_date<start_date and real_data_end_date>end_date_margin and stock_id not in list(result.keys()):
             data = FetchData("stock", stock_id, key_path)
             result[f"{stock_id}"] = data
-            print(data)
     return result
 
 def GenerateAdjustDate(start_date, end_date, invest_interval):
@@ -51,20 +50,22 @@ def FindBuyPrice(df):
     for i in range(len(df)):
         if df.iloc[i]["open"] > 0:
             return df.iloc[i]['open']
-    return np.NAN
+    return 0.1
 
 def FindSellPrice(df):
     for i in range(len(df)-1, 0, -1):
         if df.iloc[i]["open"] > 0:
             return df.iloc[i]['open']
-    return np.NAN
+    return 0.1
 
 def ComputeProfit(data, balance):
     keys = list(data.keys())
     balance_for_each = balance // len(keys)
-    buy_prices = [FindBuyPrice(data[keys[i]]) for i in range(len(keys))]
-    sell_prices = [FindSellPrice(data[keys[i]]) for i in range(len(keys))]
-    profits_per_share = np.array(sell_prices)-np.array(buy_prices)
+    buy_prices = np.array([FindBuyPrice(data[keys[i]]) for i in range(len(keys))])
+    sell_prices = np.array([FindSellPrice(data[keys[i]]) for i in range(len(keys))])
+    sell_prices[np.isnan(sell_prices)]=0
+    profits_per_share = sell_prices-buy_prices
+    print(buy_prices)
     profit_ratios = np.round((profits_per_share / np.array(buy_prices))*100, 2)
     shares = np.array([balance_for_each // buy_prices[i] for i in range(len(buy_prices))])
     new_balance = np.round(np.sum(profits_per_share*shares) + balance, 0)
