@@ -27,6 +27,18 @@ def FetchData(collection_name, stock_id, key_path):
     return df
 
 @st.cache_data
+def FetchChineseName(key_path):
+    db = firestore.Client.from_service_account_json(key_path)
+    doc_ref = db.collection("chinese_name").document("info")
+    doc = doc_ref.get()
+    data = doc.to_dict()
+    df = pd.DataFrame.from_dict(data, orient="index")
+    df.reset_index(inplace=True)
+    df.rename(columns={"index" : "id"}, inplace=True)
+    l = [df.iloc[i]["id"][1:].upper()+"-"+df.iloc[i]["n"] for i in range(len(df))]
+    return l
+
+@st.cache_data
 def FetchDateMargin(key_path):
     db = firestore.Client.from_service_account_json(key_path)
     doc_ref = db.collection("date_margin").document("date_margin_data")

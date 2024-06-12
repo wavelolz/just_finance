@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Custom module imports
-from etl_process import FetchDatasetList, FetchData, CleanData, ExtractMarketCloseDate
+from etl_process import FetchDatasetList, FetchData, FetchChineseName, CleanData, ExtractMarketCloseDate
 from random_stock_select import MonkeySelectStock
 from regular_investment_plan import FilterMonths, FilterQuarters, CalculateInvestmentReturns
 
@@ -153,10 +153,11 @@ tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs(["個股走�
 
 with tab_graph:
     # Fetch the list of stock IDs
-    stock_id_list = FetchDatasetList("stock", KEY_PATH)
+    stock_list = FetchChineseName(KEY_PATH)
 
     # Select a stock from the list
-    selected_stock = st.selectbox("Stock List", stock_id_list)
+    selected_stock = st.selectbox("Stock List", stock_list, key="G1")
+    selected_stock = str("s" + selected_stock.split("-")[0]).lower()
 
     # Fetch and clean data for the selected stock
     raw_data = FetchData("stock", selected_stock, KEY_PATH)
@@ -210,15 +211,17 @@ with tab_dollar_cost_averaging:
     MIA = int(user_input)  # Default to 1000 if no input
 
     # Add a select box for the stock code at the top
-    stock_id_l = FetchDatasetList("stock", KEY_PATH)
-    stock_code = st.selectbox("Select Stock Code:", stock_id_l)
+    stock_list = FetchChineseName(KEY_PATH)
+    selected_stock = st.selectbox("Stock List", stock_list, key="RIPS7")
+    selected_stock = "s"+selected_stock.split("-")[0]
+    print(selected_stock)
 
     # Select duration type: month, quarter, or year
     duration_type = st.selectbox("Select Duration Type:", ["Month", "Quarter", "Year"], key="RIPS1")
 
     st.subheader("Select Starting and Ending Date")
     # Load the stock data file based on the selected stock code
-    data = FetchData("stock", stock_code, KEY_PATH)
+    data = FetchData("stock", selected_stock, KEY_PATH)
     data = CleanData(data)
     data0050 = FetchData("stock", "s0050", KEY_PATH)
     data0050 = CleanData(data0050)
@@ -336,7 +339,7 @@ with tab_random_strategy:
         valid_year, valid_month = get_valid_end_month()
 
         # Select start year and month
-        years = list(np.arange(2011, valid_year+1))
+        years = list(np.arange(2018, valid_year+1))
         start_year = st.selectbox("Start Year:", years, key="RSS3")
         months_select = list(range(1, 13 if start_year != valid_year else valid_month + 1))
         start_month = st.selectbox("Start Month:", months_select, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RSS2")
@@ -358,7 +361,9 @@ with tab_random_strategy:
         valid_year, valid_quarter = get_valid_end_quarter()
 
         # Select start year and quarter
-        years = list(np.arange(2011, valid_year+1))
+        years = list(np.arange(2018, valid_year+1))
+
+        start_year = st.selectbox("Start Year:", years, key="RSS3")
         quarters_select = ["Q1", "Q2", "Q3", "Q4"][:valid_quarter if start_year == valid_year else 4]
         start_quarter = st.selectbox("Start Quarter:", quarters_select, key="RSS5")
         start_month = quarter_month_map[start_quarter][0]
@@ -373,7 +378,7 @@ with tab_random_strategy:
 
     elif duration_type == "Year":
         valid_year = get_valid_end_year()
-        years = list(np.arange(2011, valid_year+1))
+        years = list(np.arange(2018, valid_year+1))
 
         # Select start year
         start_year = st.selectbox("Start Year:", years, key="RSS3")

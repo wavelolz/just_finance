@@ -21,6 +21,7 @@ def GenerateRandomStockList(start_date, num_stock, invest_interval, key_path):
         real_data_start_date = date_margin.loc[date_margin["id"] == stock_id]["s"].values[0]
         real_data_end_date = date_margin.loc[date_margin["id"] == stock_id]["e"].values[0]
         if real_data_start_date<start_date and real_data_end_date>end_date_margin and stock_id not in list(result.keys()):
+            print(stock_id)
             data = FetchData("stock", stock_id, key_path)
             result[f"{stock_id}"] = data
     return result
@@ -65,7 +66,6 @@ def ComputeProfit(data, balance):
     sell_prices = np.array([FindSellPrice(data[keys[i]]) for i in range(len(keys))])
     sell_prices[np.isnan(sell_prices)]=0
     profits_per_share = sell_prices-buy_prices
-    print(buy_prices)
     profit_ratios = np.round((profits_per_share / np.array(buy_prices))*100, 2)
     shares = np.array([balance_for_each // buy_prices[i] for i in range(len(buy_prices))])
     new_balance = np.round(np.sum(profits_per_share*shares) + balance, 0)
@@ -97,7 +97,7 @@ def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, balance,
         new_balances_0050.append(balance_0050)
 
         profit_ratioss.append(profit_ratios)
-        stockss.append(list(full_data.keys()))
+        stockss.append([i[1:] for i in list(full_data.keys())])
         dates.append(adjust_dates[i+1])
 
     return new_balances, new_balances_0050, dates, profit_ratioss, stockss
