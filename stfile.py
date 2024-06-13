@@ -157,7 +157,7 @@ with tab_graph:
 
     # Select a stock from the list
     selected_stock = st.selectbox("Stock List", stock_list, key="G1")
-    selected_stock = str("s" + selected_stock.split("-")[0]).lower()
+    selected_stock = str("s" + selected_stock.split("-")[0])
 
     # Fetch and clean data for the selected stock
     raw_data = FetchData("stock", selected_stock, KEY_PATH)
@@ -388,12 +388,17 @@ with tab_random_strategy:
         end_year = st.selectbox("End Year:", years, key="RSS4")
         end_date = f"{end_year+1}-01"
 
+    # Select stock category
+    options = ["All", "ETF", "金融保險"]
+    choice = st.radio("Select a category", options)
+
+
     # Select number of stocks 
     num_stock = st.selectbox("標的數量", [i+1 for i in range(5)])
 
     if st.button("Click to start"):
         new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
-            start_date, end_date, duration_type, num_stock, 100000, KEY_PATH
+            start_date, end_date, duration_type, num_stock, choice, 100000, KEY_PATH
         )
 
         df_plot = pd.DataFrame({

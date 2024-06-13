@@ -4,15 +4,15 @@ import pandas as pd
 from google.cloud import firestore
 
 @st.cache_data
-def FetchDatasetList(collection_name, key_path):
+def FetchDatasetList(key_path):
     db = firestore.Client.from_service_account_json(key_path)
-    collection_ref = db.collection(collection_name)
-    docs = collection_ref.stream()
-    stock_ids = []
-    for doc in docs:
-        stock_ids.append(doc.id)
-    stock_ids = stock_ids[1:]
-    return stock_ids
+    doc_ref = db.collection("info").document("info_data")
+    doc = doc_ref.get()
+    data = doc.to_dict()
+    df = pd.DataFrame.from_dict(data, orient="index")
+    df.reset_index(inplace=True)
+    df.rename(columns={"index" : "id"}, inplace=True)
+    return df
 
 @st.cache_data
 def FetchData(collection_name, stock_id, key_path):
@@ -29,9 +29,10 @@ def FetchData(collection_name, stock_id, key_path):
 @st.cache_data
 def FetchChineseName(key_path):
     db = firestore.Client.from_service_account_json(key_path)
-    doc_ref = db.collection("chinese_name").document("info")
+    doc_ref = db.collection("info").document("info_data")
     doc = doc_ref.get()
     data = doc.to_dict()
+    data = {k: data[k] for k in sorted(data)}
     df = pd.DataFrame.from_dict(data, orient="index")
     df.reset_index(inplace=True)
     df.rename(columns={"index" : "id"}, inplace=True)

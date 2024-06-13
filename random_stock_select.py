@@ -6,14 +6,20 @@ import os
 import pandas as pd
 
 
-def GenerateRandomStockList(start_date, num_stock, invest_interval, key_path):
+def GenerateRandomStockList(start_date, num_stock, category, invest_interval, key_path):
     result = {}
     invest_interval_map = {
         "Month" : 45,
         "Quarter" : 105,
         "Year" : 380
     }
-    stocks = FetchDatasetList("stock", key_path)
+    stock_df = FetchDatasetList(key_path)
+
+    if category == "All":
+        stocks = stock_df["id"].to_list()
+    else:
+        stocks = stock_df.loc[stock_df["c"] == category]["id"].to_list()
+
     date_margin = FetchDateMargin(key_path)
     while len(result) < num_stock:
         stock_id = random.sample(stocks, 1)[0]
@@ -71,7 +77,7 @@ def ComputeProfit(data, balance):
     new_balance = np.round(np.sum(profits_per_share*shares) + balance, 0)
     return new_balance, profit_ratios
 
-def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, balance, key_path):
+def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, category, balance, key_path):
     new_balances = [balance]
     profit_ratioss = []
     stockss = []
@@ -81,7 +87,7 @@ def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, balance,
     dates = [adjust_dates[0]]
 
     for i in range(len(adjust_dates)-1):
-        full_data = GenerateRandomStockList(adjust_dates[i], num_stock, invest_interval, key_path)
+        full_data = GenerateRandomStockList(adjust_dates[i], num_stock, category, invest_interval, key_path)
         last_day = str(datetime.strptime(adjust_dates[i+1], "%Y-%m-%d")-timedelta(days=1))
         truncated_data = GetDataInterval(full_data, adjust_dates[i], last_day)
 
