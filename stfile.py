@@ -148,6 +148,14 @@ def modify_detail_df(stocks_group, profit_ratios_group, dates):
 
     return info_df
 
+# Define a function to determine the color based on the value
+def get_color(value):
+    return "red" if value > 0 else "green"
+
+# Define a function to format the value with a "+" sign if positive
+def format_value(value):
+    return f"+{value}%" if value > 0 else str(value)+"%"
+
 
 tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs(["個股走勢", "定期定額實驗", "隨機選股實驗"])
 
@@ -398,7 +406,7 @@ with tab_random_strategy:
 
     if st.button("Click to start"):
         new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
-            start_date, end_date, duration_type, num_stock, choice, 100000, KEY_PATH
+            start_date, end_date, duration_type, num_stock, choice, 1000, KEY_PATH
         )
 
         df_plot = pd.DataFrame({
@@ -407,10 +415,78 @@ with tab_random_strategy:
             "date" : dates
         })
 
+        
+
         # Plot the balance over time
         fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title="Balance of Randomly Selected Stock")
         st.plotly_chart(fig)
+
+
+        # Provide summary statistics
+        profit_ratio_random = np.round((new_balances[-1]-1000)/1000*100, 2)
+        profit_ratio_0050 = np.round((new_balances_0050[-1]-1000)/1000*100, 2)
+        profit_ratio_difference = np.round(profit_ratio_random-profit_ratio_0050, 2)
         
+
+        html_code = f"""
+        <style>
+        .container {{
+            display: flex;
+            justify-content: space-around;  /* Use space-around to center the metrics */
+            margin-bottom: 20px;
+        }}
+
+        .metric {{
+            text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 220px; /* Set a minimum width to ensure space between metrics */
+        }}
+
+        .metric::after {{
+            content: '';
+            position: absolute;
+            right: -10px; /* Adjust the position to be just outside the padding */
+            top: 10%; /* Adjust this value to center the line vertically */
+            height: 80%; /* Adjust this value to change the line height */
+            border-right: 1px solid #e0e0e0;
+        }}
+
+        .metric:last-child::after {{
+            content: none;
+        }}
+
+        .metric-title {{
+            font-size: 16px;
+            white-space: nowrap; /* Prevents breaking into multiple lines */
+        }}
+
+        .metric-value {{
+            font-size: 32px;
+            font-weight: bold;
+        }}
+        </style>
+
+        <div class="container">
+            <div class="metric">
+                <div class="metric-title">隨機選股報酬率</div>
+                <div class="metric-value" style="color: {get_color(profit_ratio_random)};">{format_value(profit_ratio_random)}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-title">0050報酬率</div>
+                <div class="metric-value" style="color: {get_color(profit_ratio_0050)};">{format_value(profit_ratio_0050)}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-title">與0050之比較</div>
+                <div class="metric-value" style="color: {get_color(profit_ratio_difference)};">{format_value(profit_ratio_difference)}</div>
+            </div>
+        </div>
+        """
+
+        st.markdown(html_code, unsafe_allow_html=True)
+
         # Displayed detailed information
         df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates)
         st.markdown(CSS+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
