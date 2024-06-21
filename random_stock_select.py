@@ -8,14 +8,30 @@ import pandas as pd
 
 def GenerateRandomStockList(start_date, num_stock, category, invest_interval, key_path):
     result = {}
+    if invest_interval == "季":
+        invest_interval = "Quarter"
+    elif invest_interval == "年":
+        invest_interval = "Year"
+
     invest_interval_map = {
-        "Month" : 45,
         "Quarter" : 105,
         "Year" : 380
     }
     stock_df = FetchDatasetList(key_path)
 
-    if category == "All":
+    category_map = {
+        "Financial and Insurance": "金融保險",
+        "Electrical and Mechanical": "電機機械",
+        "Electronic Industry": "電子工業",
+        "Telecommunications and Networking Industry": "通信網路業",
+        "Semiconductor Industry": "半導體業",
+        "Computer and Peripheral Equipment Industry": "電腦及週邊設備業"
+    }
+
+    if category in category_map.keys():
+        category = category_map[category]
+        
+    if category == "All" or category == "全部":
         stocks = stock_df["id"].to_list()
     else:
         stocks = stock_df.loc[stock_df["c"] == category]["id"].to_list()
@@ -36,12 +52,10 @@ def GenerateAdjustDate(start_date, end_date, invest_interval):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
 
-    if invest_interval == "Month":
-        adjust_date = pd.date_range(start=start_date, end=end_date, freq="MS").strftime("%Y-%m-%d").to_list()
-    elif invest_interval == "Quarter":
+    if invest_interval == "Quarter" or invest_interval == "季":
         end_date = end_date + pd.offsets.MonthEnd(1) + timedelta(days=1)
         adjust_date = pd.date_range(start=start_date, end=end_date, freq="QS").strftime("%Y-%m-%d").to_list()
-    elif invest_interval == "Year":
+    elif invest_interval == "Year" or invest_interval == "年":
         adjust_date = pd.date_range(start=start_date, end=end_date, freq="YS").strftime("%Y-%m-%d").to_list()
 
     return adjust_date

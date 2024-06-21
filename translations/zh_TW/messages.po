@@ -1,0 +1,107 @@
+msgid "Stock Trend"
+msgstr "個股走勢"
+
+msgid "Regular Investment Plan"
+msgstr "定期定額計畫"
+
+msgid "Random Stock Selection Plan"
+msgstr "隨機選股計畫"
+
+msgid "Stock List"
+msgstr "股票清單"
+
+msgid "Please select the length of the date"
+msgstr "請選擇繪圖時間區間"
+
+msgid "1M"
+msgstr "1月"
+
+msgid "3M"
+msgstr "3月"
+
+msgid "5M"
+msgstr "5月"
+
+msgid "1Y"
+msgstr "1年"
+
+msgid "5Y"
+msgstr "5年"
+
+msgid "All"
+msgstr "全部時間"
+
+msgid "Portfolio Turnover Frequency:"
+msgstr "投資組合週轉頻率"
+
+msgid "Quarter"
+msgstr "季"
+
+msgid "Year"
+msgstr "年"
+
+msgid "Start Year:"
+msgstr "起始年:"
+
+msgid "Start Quarter:"
+msgstr "起始季:"
+
+msgid "End Year:"
+msgstr "結束年:"
+
+msgid "End Quarter:"
+msgstr "結束季:"
+
+msgid "All"
+msgstr "全部"
+
+msgid "ETF"
+msgstr "ETF"
+
+msgid "Financial and Insurance"
+msgstr "金融保險"
+
+msgid "Electrical and Mechanical"
+msgstr "電機機械"
+
+msgid "Electronic Industry"
+msgstr "電子工業"
+
+msgid "Telecommunications and Networking Industry"
+msgstr "通信網路業"
+
+msgid "Semiconductor Industry"
+msgstr "半導體業"
+
+msgid "Computer and Peripheral Equipment Industry"
+msgstr "電腦及週邊設備業"
+
+msgid "Please select an industry"
+msgstr "請選擇一個產業"
+
+msgid "Number of stocks"
+msgstr "標的數量"
+
+msgid "Start"
+msgstr "開始"
+
+msgid "Please select a valid date range (End year > Start year)"
+msgstr "請選擇合法日期區間 (結束年分>開始年分)"
+
+msgid "Balance of Random Stock Selection Plan"
+msgstr "隨機選股總資產"
+
+msgid "Return Rate of Random Stock Selection Plan"
+msgstr "隨機選股報酬率"
+
+msgid "Return Rate of 0050"
+msgstr "0050報酬率"
+
+msgid "Comparison with 0050"
+msgstr "與0050之比較"
+
+msgid "Stock-"
+msgstr "標的-"
+
+msgid "Portfolio Holding Period"
+msgstr "部位持有時間段"

@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import polib
 
 # Custom module imports
 from etl_process import FetchDatasetList, FetchData, FetchChineseName, CleanData, ExtractMarketCloseDate
@@ -96,7 +97,7 @@ def progress_callback(step, total_steps):
     progress_bar.progress(progress_percentage)
 
 
-def modify_detail_df(stocks_group, profit_ratios_group, dates):
+def modify_detail_df(stocks_group, profit_ratios_group, dates, _t=None):
     """
     Format detailed stock data for display.
     
@@ -127,13 +128,13 @@ def modify_detail_df(stocks_group, profit_ratios_group, dates):
     info_df = pd.DataFrame(formatted_infos)
 
     # Set column names for stocks
-    info_df.columns = [f"標的{i+1}" for i in range(len(stocks_group[0]))]
+    info_df.columns = [_t("Stock-")+str(i+1) for i in range(len(stocks_group[0]))]
 
     # Add date intervals as a new column
-    info_df["執行期間"] = date_intervals
+    info_df[_t("Portfolio Holding Period")] = date_intervals
 
     # Reorder columns to place "執行期間" at the front
-    columns = ["執行期間"] + [f"標的{i+1}" for i in range(len(stocks_group[0]))]
+    columns = [_t("Portfolio Holding Period")] + [_t("Stock-")+str(i+1) for i in range(len(stocks_group[0]))]
     info_df = info_df[columns]
 
     return info_df
@@ -147,14 +148,33 @@ def format_value(value):
     return f"+{value}%" if value > 0 else str(value)+"%"
 
 
-tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs(["個股走勢", "定期定額實驗", "隨機選股實驗"])
+def get_translation(language):
+    localedir = os.path.join(os.path.dirname(__file__), 'translations')
+    po_file = os.path.join(localedir, language, 'messages.po')
+    po = polib.pofile(po_file)
+    translations = {entry.msgid: entry.msgstr for entry in po}
+    return translations
+
+# Define the available languages
+languages = {'English': 'en', 'Traditional Chinese': 'zh_TW'}
+
+# Create a selectbox for language selection
+selected_language = st.sidebar.selectbox('Select Language', options=list(languages.keys()))
+
+# Load the translation function based on the selected language
+translations = get_translation(languages[selected_language])
+_t = lambda s: translations.get(s, s)
+
+tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs([_t("Stock Trend"), _t("Regular Investment Plan"), _t("Random Stock Selection Plan")])
+
+
 
 with tab_graph:
     # Fetch the list of stock IDs
     stock_list = FetchChineseName(KEY_PATH)
 
     # Select a stock from the list
-    selected_stock = st.selectbox("Stock List", stock_list, key="G1")
+    selected_stock = st.selectbox(_t("Stock List"), stock_list, key="G1")
     selected_stock = str("s" + selected_stock.split("-")[0])
 
     # Fetch and clean data for the selected stock
@@ -164,17 +184,17 @@ with tab_graph:
     
     # Map the duration to filter codes
     duration_map = {
-        "1月": 0,
-        "3月": 1,
-        "5月": 2,
-        "1年": 3,
-        "5年": 4,
-        "全部時間": 5
+        _t("1M"): 0,
+        _t("3M"): 1,
+        _t("5M"): 2,
+        _t("1Y"): 3,
+        _t("5Y"): 4,
+        _t("All"): 5
     }
 
     # Select the duration for plotting
     selected_duration = st.radio(
-        "請選擇繪圖日期長度",
+        _t("Please select the length of the date"),
         list(duration_map.keys()),
         horizontal=True
     )
@@ -199,9 +219,9 @@ with tab_graph:
     st.plotly_chart(fig, use_container_width=True)
 
 with tab_dollar_cost_averaging:
-    st.header("這裡做定期定額")
+
     # Set the title of the app
-    st.title("Regular Investment Plan Simulation")
+    st.title("Regular Investment Plan")
     st.subheader("Select Monthly Investment Account")
 
     # Create a text input widget for monthly investment amount
@@ -327,13 +347,13 @@ with tab_dollar_cost_averaging:
         st.write("No data available for the selected date range.")
 
 with tab_random_strategy:
-    st.header("這裡做隨機選股")
 
     # Select the duration type
-    duration_type = st.selectbox("Select Duration Type:", ["Quarter", "Year"], key="RSS1")
+    duration_type = st.selectbox(_t("Portfolio Turnover Frequency:"), [_t("Quarter"), _t("Year")], key="RSS1")
 
 
-    if duration_type == "Quarter":
+
+    if duration_type == _t("Quarter"):
         quarter_month_map = {
         "Q1": (1, 3),
         "Q2": (4, 6),
@@ -345,43 +365,46 @@ with tab_random_strategy:
         # Select start year and quarter
         years = list(np.arange(2018, valid_year+1))
 
-        start_year = st.selectbox("Start Year:", years, key="RSS3")
+        start_year = st.selectbox(_t("Start Year:"), years, key="RSS3")
         quarters_select = ["Q1", "Q2", "Q3", "Q4"][:valid_quarter if start_year == valid_year else 4]
-        start_quarter = st.selectbox("Start Quarter:", quarters_select, key="RSS5")
+        start_quarter = st.selectbox(_t("Start Quarter:"), quarters_select, key="RSS5")
         start_month = quarter_month_map[start_quarter][0]
         start_date = f"{start_year}-{str(start_month).zfill(2)}"
 
         # Select end year and quarter
-        end_year = st.selectbox("End Year:", years, key="RSS4")
+        end_year = st.selectbox(_t("End Year:"), years, key="RSS4")
         quarters_select = ["Q1", "Q2", "Q3", "Q4"][:valid_quarter if end_year == valid_year else 4]
-        end_quarter = st.selectbox("End Quarter:", quarters_select, key="RSS6")
+        end_quarter = st.selectbox(_t("End Quarter:"), quarters_select, key="RSS6")
         end_month = quarter_month_map[end_quarter][1]
         end_date = f"{end_year}-{str(end_month).zfill(2)}"
 
-    elif duration_type == "Year":
+    elif duration_type == _t("Year"):
         valid_year = get_valid_end_year()
         years = list(np.arange(2018, valid_year+1))
 
         # Select start year
-        start_year = st.selectbox("Start Year:", years, key="RSS3")
+        start_year = st.selectbox(_t("Start Year:"), years, key="RSS3")
         start_date = f"{start_year}-01"
 
         # Select end year
-        end_year = st.selectbox("End Year:", years, key="RSS4")
+        end_year = st.selectbox(_t("End Year:"), years, key="RSS4")
         end_date = f"{end_year+1}-01"
 
     # Select stock category
-    options = ["All", "ETF", "金融保險", "電機機械", "電子工業", "通信網路業", "半導體業", "電腦及週邊設備業"]
-    choice = st.radio("Select a category", options)
+    options = [_t("All"), _t("ETF"), _t("Financial and Insurance"), 
+               _t("Electrical and Mechanical"), _t("Electronic Industry"), 
+               _t("Telecommunications and Networking Industry"), _t("Semiconductor Industry"), 
+               _t("Computer and Peripheral Equipment Industry")]
+    choice = st.radio(_t("Please select an industry"), options)
 
 
     # Select number of stocks 
-    num_stock = st.selectbox("標的數量", [i+1 for i in range(5)])
+    num_stock = st.selectbox(_t("Number of stocks"), [i+1 for i in range(5)])
 
     progress_bar = st.progress(0)
-    if st.button("Click to start"):
+    if st.button(_t("Start")):
         if end_year <= start_year:
-            st.write("請選擇合法日期區間 (結束年分>開始年分)")
+            st.write(_t("Please select a valid date range (End year > Start year)"))
         else:
             new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
                 start_date, end_date, duration_type, num_stock, choice, 1000, KEY_PATH, progress_callback
@@ -396,7 +419,7 @@ with tab_random_strategy:
             
 
             # Plot the balance over time
-            fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title="Balance of Randomly Selected Stock")
+            fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title=_t("Balance of Random Stock Selection Plan"))
             st.plotly_chart(fig)
 
 
@@ -449,15 +472,15 @@ with tab_random_strategy:
 
             <div class="container">
                 <div class="metric">
-                    <div class="metric-title">隨機選股報酬率</div>
+                    <div class="metric-title">{_t("Return Rate of Random Stock Selection Plan")}</div>
                     <div class="metric-value" style="color: {get_color(profit_ratio_random)};">{format_value(profit_ratio_random)}</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-title">0050報酬率</div>
+                    <div class="metric-title">{_t("Return Rate of 0050")}</div>
                     <div class="metric-value" style="color: {get_color(profit_ratio_0050)};">{format_value(profit_ratio_0050)}</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-title">與0050之比較</div>
+                    <div class="metric-title">{_t("Comparison with 0050")}</div>
                     <div class="metric-value" style="color: {get_color(profit_ratio_difference)};">{format_value(profit_ratio_difference)}</div>
                 </div>
             </div>
@@ -466,6 +489,6 @@ with tab_random_strategy:
             st.markdown(html_code, unsafe_allow_html=True)
 
             # Displayed detailed information
-            df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates)
+            df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates, _t)
             st.markdown(CSS+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
 

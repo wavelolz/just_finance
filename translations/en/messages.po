@@ -1,0 +1,107 @@
+msgid "Stock Trend"
+msgstr "Stock Trend"
+
+msgid "Regular Investment Plan"
+msgstr "Regular Investment Plan"
+
+msgid "Random Stock Selection Plan"
+msgstr "Random Stock Selection Plan"
+
+msgid "Stock List"
+msgstr "Stock List"
+
+msgid "Please select the length of the date"
+msgstr "Please select the length of the date"
+
+msgid "1M"
+msgstr "1M"
+
+msgid "3M"
+msgstr "3M"
+
+msgid "5M"
+msgstr "5M"
+
+msgid "1Y"
+msgstr "1Y"
+
+msgid "5Y"
+msgstr "5Y"
+
+msgid "All"
+msgstr "All"
+
+msgid "Portfolio Turnover Frequency:"
+msgstr "Portfolio Turnover Frequency:"
+
+msgid "Quarter"
+msgstr "Quarter"
+
+msgid "Year"
+msgstr "Year"
+
+msgid "Start Year:"
+msgstr "Start Year:"
+
+msgid "Start Quarter:"
+msgstr "Start Quarter:"
+
+msgid "End Year:"
+msgstr "End Year:"
+
+msgid "End Quarter:"
+msgstr "End Quarter:"
+
+msgid "All"
+msgstr "All"
+
+msgid "ETF"
+msgstr "ETF"
+
+msgid "Financial and Insurance"
+msgstr "Financial and Insurance"
+
+msgid "Electrical and Mechanical"
+msgstr "Electrical and Mechanical"
+
+msgid "Electronic Industry"
+msgstr "Electronic Industry"
+
+msgid "Telecommunications and Networking Industry"
+msgstr "Telecommunications and Networking Industry"
+
+msgid "Semiconductor Industry"
+msgstr "Semiconductor Industry"
+
+msgid "Computer and Peripheral Equipment Industry"
+msgstr "Computer and Peripheral Equipment Industry"
+
+msgid "Please select an industry"
+msgstr "Please select an industry"
+
+msgid "Number of stocks"
+msgstr "Number of stocks"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Please select a valid date range (End year > Start year)"
+msgstr "Please select a valid date range (End year > Start year)"
+
+msgid "Balance of Random Stock Selection Plan"
+msgstr "Balance of Random Stock Selection Plan"
+
+msgid "Return Rate of Random Stock Selection Plan"
+msgstr "Return Rate of Random Stock Selection Plan"
+
+msgid "Return Rate of 0050"
+msgstr "Return Rate of 0050"
+
+msgid "Comparison with 0050"
+msgstr "Comparison with 0050"
+
+msgid "Stock-"
+msgstr "Stock-"
+
+msgid "Portfolio Holding Period"
+msgstr "Portfolio Holding Period"
