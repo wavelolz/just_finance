@@ -77,7 +77,8 @@ def ComputeProfit(data, balance):
     new_balance = np.round(np.sum(profits_per_share*shares) + balance, 0)
     return new_balance, profit_ratios
 
-def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, category, balance, key_path):
+def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, category, balance, key_path, progress_callback=None):
+    _ = None
     new_balances = [balance]
     profit_ratioss = []
     stockss = []
@@ -85,8 +86,9 @@ def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, category
     new_balances_0050 = [balance_0050]
     adjust_dates = GenerateAdjustDate(start_date, end_date, invest_interval)
     dates = [adjust_dates[0]]
+    total_steps = len(adjust_dates)-1
 
-    for i in range(len(adjust_dates)-1):
+    for i in range(total_steps):
         full_data = GenerateRandomStockList(adjust_dates[i], num_stock, category, invest_interval, key_path)
         last_day = str(datetime.strptime(adjust_dates[i+1], "%Y-%m-%d")-timedelta(days=1))
         truncated_data = GetDataInterval(full_data, adjust_dates[i], last_day)
@@ -104,6 +106,9 @@ def MonkeySelectStock(start_date, end_date, invest_interval, num_stock, category
 
         profit_ratioss.append(profit_ratios)
         stockss.append([i[1:] for i in list(full_data.keys())])
-        dates.append(adjust_dates[i+1])
+        dates.append(adjust_dates[i+1])    
+
+        if progress_callback:
+            progress_callback(i + 1, total_steps)
 
     return new_balances, new_balances_0050, dates, profit_ratioss, stockss

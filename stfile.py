@@ -32,6 +32,8 @@ CSS = """
 </style>
 """
 
+
+
 def filter_date(data, code):
     """
     Filter stock data based within specific date range
@@ -55,22 +57,6 @@ def filter_date(data, code):
         return data[-code_day_map[code]:]
     
     return data
-
-def get_valid_end_month():
-    """
-    Get the valid end month for date range available.
-    
-    Returns:
-        tuple: A tuple containing the year and the valid month.
-    """
-    today = date.today()
-    year = today.year
-    month = today.month - 1
-
-    if month<1:
-        year -= 1
-        month = 12
-    return year, month
 
 def get_valid_end_quarter():
     """
@@ -104,6 +90,10 @@ def get_valid_end_year():
     year = date.today().year
     year -= 1
     return year
+
+def progress_callback(step, total_steps):
+    progress_percentage = int(step / total_steps * 100)
+    progress_bar.progress(progress_percentage)
 
 
 def modify_detail_df(stocks_group, profit_ratios_group, dates):
@@ -222,7 +212,7 @@ with tab_dollar_cost_averaging:
     stock_list = FetchChineseName(KEY_PATH)
     selected_stock = st.selectbox("Stock List", stock_list, key="RIPS7")
     selected_stock = "s"+selected_stock.split("-")[0]
-    print(selected_stock)
+
 
     # Select duration type: month, quarter, or year
     duration_type = st.selectbox("Select Duration Type:", ["Month", "Quarter", "Year"], key="RIPS1")
@@ -340,26 +330,10 @@ with tab_random_strategy:
     st.header("這裡做隨機選股")
 
     # Select the duration type
-    duration_type = st.selectbox("Select Duration Type:", ["Month", "Quarter", "Year"], key="RSS1")
+    duration_type = st.selectbox("Select Duration Type:", ["Quarter", "Year"], key="RSS1")
 
 
-    if duration_type == "Month":
-        valid_year, valid_month = get_valid_end_month()
-
-        # Select start year and month
-        years = list(np.arange(2018, valid_year+1))
-        start_year = st.selectbox("Start Year:", years, key="RSS3")
-        months_select = list(range(1, 13 if start_year != valid_year else valid_month + 1))
-        start_month = st.selectbox("Start Month:", months_select, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RSS2")
-        start_date = f"{start_year}-{str(start_month).zfill(2)}"
-
-        # Select end year and month
-        end_year = st.selectbox("End Year:", years, key="RSS4")
-        months_select = list(range(1, 13 if end_year != valid_year else valid_month))
-        end_month = st.selectbox("End Month:", months_select, format_func=lambda x: datetime(1900, x, 1).strftime('%B'), key="RSS5")
-        end_date = f"{end_year + (1 if end_month == 12 else 0)}-{str(end_month%12 + 1).zfill(2)}"
-
-    elif duration_type == "Quarter":
+    if duration_type == "Quarter":
         quarter_month_map = {
         "Q1": (1, 3),
         "Q2": (4, 6),
@@ -397,97 +371,101 @@ with tab_random_strategy:
         end_date = f"{end_year+1}-01"
 
     # Select stock category
-    options = ["All", "ETF", "金融保險"]
+    options = ["All", "ETF", "金融保險", "電機機械", "電子工業", "通信網路業", "半導體業", "電腦及週邊設備業"]
     choice = st.radio("Select a category", options)
 
 
     # Select number of stocks 
     num_stock = st.selectbox("標的數量", [i+1 for i in range(5)])
 
+    progress_bar = st.progress(0)
     if st.button("Click to start"):
-        new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
-            start_date, end_date, duration_type, num_stock, choice, 1000, KEY_PATH
-        )
+        if end_year <= start_year:
+            st.write("請選擇合法日期區間 (結束年分>開始年分)")
+        else:
+            new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
+                start_date, end_date, duration_type, num_stock, choice, 1000, KEY_PATH, progress_callback
+            )
 
-        df_plot = pd.DataFrame({
-            "balance" : new_balances,
-            "balance_0050" : new_balances_0050,
-            "date" : dates
-        })
+            df_plot = pd.DataFrame({
+                "balance" : new_balances,
+                "balance_0050" : new_balances_0050,
+                "date" : dates
+            })
 
-        
+            
 
-        # Plot the balance over time
-        fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title="Balance of Randomly Selected Stock")
-        st.plotly_chart(fig)
+            # Plot the balance over time
+            fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title="Balance of Randomly Selected Stock")
+            st.plotly_chart(fig)
 
 
-        # Provide summary statistics
-        profit_ratio_random = np.round((new_balances[-1]-1000)/1000*100, 2)
-        profit_ratio_0050 = np.round((new_balances_0050[-1]-1000)/1000*100, 2)
-        profit_ratio_difference = np.round(profit_ratio_random-profit_ratio_0050, 2)
-        
+            # Provide summary statistics
+            profit_ratio_random = np.round((new_balances[-1]-1000)/1000*100, 2)
+            profit_ratio_0050 = np.round((new_balances_0050[-1]-1000)/1000*100, 2)
+            profit_ratio_difference = np.round(profit_ratio_random-profit_ratio_0050, 2)
+            
 
-        html_code = f"""
-        <style>
-        .container {{
-            display: flex;
-            justify-content: space-around;  /* Use space-around to center the metrics */
-            margin-bottom: 20px;
-        }}
+            html_code = f"""
+            <style>
+            .container {{
+                display: flex;
+                justify-content: space-around;  /* Use space-around to center the metrics */
+                margin-bottom: 20px;
+            }}
 
-        .metric {{
-            text-align: center;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 220px; /* Set a minimum width to ensure space between metrics */
-        }}
+            .metric {{
+                text-align: center;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                min-width: 220px; /* Set a minimum width to ensure space between metrics */
+            }}
 
-        .metric::after {{
-            content: '';
-            position: absolute;
-            right: -10px; /* Adjust the position to be just outside the padding */
-            top: 10%; /* Adjust this value to center the line vertically */
-            height: 80%; /* Adjust this value to change the line height */
-            border-right: 1px solid #e0e0e0;
-        }}
+            .metric::after {{
+                content: '';
+                position: absolute;
+                right: -10px; /* Adjust the position to be just outside the padding */
+                top: 10%; /* Adjust this value to center the line vertically */
+                height: 80%; /* Adjust this value to change the line height */
+                border-right: 1px solid #e0e0e0;
+            }}
 
-        .metric:last-child::after {{
-            content: none;
-        }}
+            .metric:last-child::after {{
+                content: none;
+            }}
 
-        .metric-title {{
-            font-size: 16px;
-            white-space: nowrap; /* Prevents breaking into multiple lines */
-        }}
+            .metric-title {{
+                font-size: 16px;
+                white-space: nowrap; /* Prevents breaking into multiple lines */
+            }}
 
-        .metric-value {{
-            font-size: 32px;
-            font-weight: bold;
-        }}
-        </style>
+            .metric-value {{
+                font-size: 32px;
+                font-weight: bold;
+            }}
+            </style>
 
-        <div class="container">
-            <div class="metric">
-                <div class="metric-title">隨機選股報酬率</div>
-                <div class="metric-value" style="color: {get_color(profit_ratio_random)};">{format_value(profit_ratio_random)}</div>
+            <div class="container">
+                <div class="metric">
+                    <div class="metric-title">隨機選股報酬率</div>
+                    <div class="metric-value" style="color: {get_color(profit_ratio_random)};">{format_value(profit_ratio_random)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-title">0050報酬率</div>
+                    <div class="metric-value" style="color: {get_color(profit_ratio_0050)};">{format_value(profit_ratio_0050)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-title">與0050之比較</div>
+                    <div class="metric-value" style="color: {get_color(profit_ratio_difference)};">{format_value(profit_ratio_difference)}</div>
+                </div>
             </div>
-            <div class="metric">
-                <div class="metric-title">0050報酬率</div>
-                <div class="metric-value" style="color: {get_color(profit_ratio_0050)};">{format_value(profit_ratio_0050)}</div>
-            </div>
-            <div class="metric">
-                <div class="metric-title">與0050之比較</div>
-                <div class="metric-value" style="color: {get_color(profit_ratio_difference)};">{format_value(profit_ratio_difference)}</div>
-            </div>
-        </div>
-        """
+            """
 
-        st.markdown(html_code, unsafe_allow_html=True)
+            st.markdown(html_code, unsafe_allow_html=True)
 
-        # Displayed detailed information
-        df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates)
-        st.markdown(CSS+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
+            # Displayed detailed information
+            df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates)
+            st.markdown(CSS+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
 
