@@ -1,12 +1,7 @@
-# fun.py
-
-import pandas as pd
 import numpy as np
-from datetime import datetime
 
 
-
-def filter_months(year, min_date, max_date):
+def FilterMonths(year, min_date, max_date):
     months = list(range(1, 13))
     if year == min_date.year and year == max_date.year:
         return list(range(min_date.month, max_date.month + 1))
@@ -17,7 +12,7 @@ def filter_months(year, min_date, max_date):
     else:
         return months
 
-def filter_quarters(year, min_date, max_date):
+def FilterQuarters(year, min_date, max_date):
     quarter_month_map = {
     "Q1": (1, 3),
     "Q2": (4, 6),
@@ -31,7 +26,7 @@ def filter_quarters(year, min_date, max_date):
             valid_quarters.append(quarter)
     return valid_quarters
 
-def calculate_investment_returns(filtered_data, duration_type, MIA=1000):
+def CalculateInvestmentReturns(filtered_data, duration_type, MIA=1000):
     if not filtered_data.empty:
         if duration_type == "Month":
             group_cols = ['year', 'month']
