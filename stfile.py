@@ -40,6 +40,22 @@ if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+
+# initialize the structure
+if 'user_id' not in st.session_state:
+    st.session_state['user_id'] = str(uuid.uuid4())
+
+# Initialize the click counts in session state
+if 'tab1' not in st.session_state:
+    st.session_state['tab1'] = 0
+if 'tab2' not in st.session_state:
+    st.session_state['tab2'] = 0
+if 'tab3' not in st.session_state:
+    st.session_state['tab3'] = 0
+
+if 'active_tab' not in st.session_state:
+    st.session_state['active_tab'] = 1
+    
 # Function to save user session to Firestore
 def save_user_session(user_id):
     user_ref = db.collection("users").document(user_id)

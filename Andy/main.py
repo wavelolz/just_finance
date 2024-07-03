@@ -11,23 +11,24 @@ st.title("Regular Investment Plan")
 # Create three columns with a 1:1:2 ratio
 col1, col2 = st.columns([1, 1])
 with col1:
-    st.subheader("Select Monthly Investment Account")
+    st.subheader("Design your plan")
 
+    # Add a select box for the stock code at the top
+    stock_code = st.selectbox("Select Stock Code:", ["2609", "0050", "0052", "0053", "0054"])
+    
+    # Select duration type: month, quarter, or year
+    duration_type = st.selectbox("Select investment frequency:", ["Month", "Quarter", "Year"])
+    
     # Create a text input widget for monthly investment amount
     user_input = st.text_input("Money you invest monthly", value=1000)
     MIA = int(user_input)  # Default to 1000 if no input
 
-    # Add a select box for the stock code at the top
-    stock_code = st.selectbox("Select Stock Code:", ["2609", "0050", "0052", "0053", "0054"])
-
-    # Select duration type: month, quarter, or year
-    duration_type = st.selectbox("Select investment frequency:", ["Month", "Quarter", "Year"])
     
 with col2:
     st.subheader("Select Starting and Ending Date")
     # Load the stock data file based on the selected stock code
-    data = pd.read_csv('just_finance\Andy\s2609.csv')
-    data0050 = pd.read_csv('just_finance\Andy\s0050.csv')
+    data = pd.read_csv('Andy\s2609.csv')
+    data0050 = pd.read_csv('Andy\s0050.csv')
     data['date'] = pd.to_datetime(data['date'])
     data0050['date'] = pd.to_datetime(data0050['date'])
 
