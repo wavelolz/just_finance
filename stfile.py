@@ -14,7 +14,7 @@ import extra_streamlit_components as stx
 # Custom module imports
 from etl_process import FetchDatasetList, FetchData, FetchChineseName, CleanData, ExtractMarketCloseDate
 from random_stock_select import MonkeySelectStock
-from regular_investment_plan import FilterMonths, FilterQuarters, CalculateInvestmentReturns, DisplayComparison
+from regular_investment_plan import FilterMonths, FilterQuarters, CalculateInvestmentReturns
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 KEY_PATH = os.path.join(DIR_PATH, "secret_info/stockaroo-privatekey.json")
@@ -22,6 +22,8 @@ KEY_PATH = os.path.join(DIR_PATH, "secret_info/stockaroo-privatekey.json")
 '''=================  Used for tracking the popular tab - Part 1 ============================'''
 from dotenv import load_dotenv
 import uuid
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 # Load Firebase configuration from environment variables
 FIREBASE_API_KEY = os.getenv('FIREBASE_API_KEY')
@@ -304,24 +306,32 @@ if chosen_id == "1":
 
 if chosen_id == "2":
 
+    # Fetch the list of stock IDs
+    stock_list = FetchChineseName(KEY_PATH)
+
     # Set the title of the app
     st.title("Regular Investment Plan")
+    
     # Create three columns with a 1:1:2 ratio
     col1, col2 = st.columns([1, 1])
     with col1:
         st.subheader("Select Monthly Investment Account")
 
-        # Create a text input widget for monthly investment amount
-        user_input = st.text_input("Money you invest monthly", value=1000)
-        MIA = int(user_input)  # Default to 1000 if no input
-
         # Add a select box for the stock code at the top
-        stock_code = st.selectbox("Select Stock Code:", ["2609", "0050", "0052", "0053", "0054"])
+        stock_code = st.selectbox(_t("Stock List"), stock_list)
+        stock_code = str("s" + selected_stock.split("-")[0])
 
         # Select duration type: month, quarter, or year
         duration_type = st.selectbox("Select investment frequency:", ["Month", "Quarter", "Year"])
         
+        # Create a text input widget for monthly investment amount
+        user_input = st.text_input("Money you invest every time", value=1000)
+        MIA = int(user_input)  # Default to 1000 if no input
+
+        
     with col2:
+        
+
         st.subheader("Select Starting and Ending Date")
         # Load the stock data file based on the selected stock code
         data = FetchData("stock", selected_stock, KEY_PATH)
