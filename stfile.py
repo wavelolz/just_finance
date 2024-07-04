@@ -10,38 +10,17 @@ import plotly.express as px
 import plotly.graph_objects as go
 import polib
 import extra_streamlit_components as stx
+import uuid
 
 # Custom module imports
 from etl_process import FetchDatasetList, FetchData, FetchChineseName, CleanData, ExtractMarketCloseDate
 from random_stock_select import MonkeySelectStock
 from regular_investment_plan import FilterMonths, FilterQuarters, CalculateInvestmentReturns
+from user_behavior_tracker import save_user_session, save_tab_click_counter
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 KEY_PATH = os.path.join(DIR_PATH, "secret_info/stockaroo-privatekey.json")
 
-'''=================  Used for tracking the popular tab - Part 1 ============================'''
-from dotenv import load_dotenv
-import uuid
-import firebase_admin
-from firebase_admin import credentials, firestore
-
-# Load Firebase configuration from environment variables
-FIREBASE_API_KEY = os.getenv('FIREBASE_API_KEY')
-FIREBASE_AUTH_DOMAIN = os.getenv('FIREBASE_AUTH_DOMAIN')
-FIREBASE_PROJECT_ID = os.getenv('FIREBASE_PROJECT_ID')
-FIREBASE_STORAGE_BUCKET = os.getenv('FIREBASE_STORAGE_BUCKET')
-FIREBASE_MESSAGING_SENDER_ID = os.getenv('FIREBASE_MESSAGING_SENDER_ID')
-FIREBASE_APP_ID = os.getenv('FIREBASE_APP_ID')
-
-# 這裡輸入你的 account_key .json file
-SERVICE_ACCOUNT_KEY_PATH = r"xxx.json"
-
-# Initialize Firebase Admin SDK
-if not firebase_admin._apps:
-    cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
-    firebase_admin.initialize_app(cred)
-
-db = firestore.client()
 
 # initialize the structure
 if 'user_id' not in st.session_state:
@@ -57,31 +36,12 @@ if 'tab3' not in st.session_state:
 
 if 'active_tab' not in st.session_state:
     st.session_state['active_tab'] = 1
-    
-# Function to save user session to Firestore
-def save_user_session(user_id):
-    user_ref = db.collection("users").document(user_id)
-    if not user_ref.get().exists:
-        user_ref.set({
-            "user_id": user_id,
-            "created_at": datetime.now(),
-            "tab1_click_count": 0,
-            "tab2_click_count": 0,
-            "tab3_click_count": 0
-        })
 
 # Save the current user session
-save_user_session(st.session_state['user_id'])
+save_user_session(st.session_state['user_id'], KEY_PATH)
 
-# Function to save tab click counters to Firebase Firestore
-def save_tab_click_counter(user_id, tab_name, count):
-    user_ref = db.collection("users").document(user_id)
-    user_ref.update({
-        tab_name: count,
-        "timestamp": datetime.now()
-    })
 
-'''================= end ============================'''
+
 # Used for the data frame in random stock selection experiment
 CSS = """
 <style>
@@ -229,7 +189,6 @@ selected_language = st.sidebar.selectbox('Select Language', options=list(languag
 translations = get_translation(languages[selected_language])
 _t = lambda s: translations.get(s, s)
 
-'''===== Used for tracking the popular tab - Part 2 ====='''
 # tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs([_t("Stock Trend"), _t("Regular Investment Plan"), _t("Random Stock Selection Plan")])
 
 # Define the tab bar
@@ -245,16 +204,14 @@ if st.session_state['active_tab'] != int(chosen_id):
     st.session_state['active_tab'] = chosen_id_int
     if chosen_id_int == 1:
         st.session_state['tab1'] += 1
-        save_tab_click_counter(st.session_state['user_id'], "tab1_click_count", st.session_state['tab1'])
+        save_tab_click_counter(st.session_state['user_id'], "tab1_click_count", st.session_state['tab1'], KEY_PATH)
     elif chosen_id_int == 2:
         st.session_state['tab2'] += 1
-        save_tab_click_counter(st.session_state['user_id'], "tab2_click_count", st.session_state['tab2'])
+        save_tab_click_counter(st.session_state['user_id'], "tab2_click_count", st.session_state['tab2'], KEY_PATH)
     elif chosen_id_int == 3:
         st.session_state['tab3'] += 1
-        save_tab_click_counter(st.session_state['user_id'], "tab3_click_count", st.session_state['tab3'])
-'''===== End ====='''
+        save_tab_click_counter(st.session_state['user_id'], "tab3_click_count", st.session_state['tab3'], KEY_PATH)
 
-""" 這裡 with [tab_name] -> if chosen_id  """
 if chosen_id == "1":
     # Fetch the list of stock IDs
     stock_list = FetchChineseName(KEY_PATH)
@@ -306,9 +263,6 @@ if chosen_id == "1":
 
 if chosen_id == "2":
 
-    # Fetch the list of stock IDs
-    stock_list = FetchChineseName(KEY_PATH)
-
     # Set the title of the app
     st.title("Regular Investment Plan")
     
@@ -317,9 +271,12 @@ if chosen_id == "2":
     with col1:
         st.subheader("Select Monthly Investment Account")
 
-        # Add a select box for the stock code at the top
-        stock_code = st.selectbox(_t("Stock List"), stock_list)
-        stock_code = str("s" + selected_stock.split("-")[0])
+        # Fetch the list of stock IDs
+        stock_list = FetchChineseName(KEY_PATH)
+
+        # Select a stock from the list
+        selected_stock = st.selectbox(_t("Stock List"), stock_list, key="G1")
+        selected_stock = str("s" + selected_stock.split("-")[0])
 
         # Select duration type: month, quarter, or year
         duration_type = st.selectbox("Select investment frequency:", ["Month", "Quarter", "Year"])
@@ -440,7 +397,7 @@ if chosen_id == "2":
                 individual_ratio = round(individual_ratio, 2)
                 etf_change = round(etf_change, 2)
                 etf_ratio = round(etf_ratio, 2)
-
+                print(individual_change)
                 # Add the currency symbol and signs for numbers
                 display_individual_change = f"+ {individual_change:.2f} NT" if individual_change > 0 else f"- {-individual_change:.2f} NT"
                 display_etf_change = f"+ {etf_change:.2f} NT" if etf_change > 0 else f"- {-etf_change:.2f} NT"
