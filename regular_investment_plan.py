@@ -1,5 +1,19 @@
 import numpy as np
 
+def FormatNumber(num):
+    if num >= 1_000_000:
+        return f"{num / 1_000_000:.2f}M"
+    # elif num >= 1_000:
+    #     return f"{num / 1_000:.2f}k"
+    else:
+        return f"{num:.2f}"
+
+def FormatChange(value):
+    return f"+ {FormatNumber(value)} NT" if value > 0 else f"- {FormatNumber(abs(value))} NT"
+
+def FormatRatio(value):
+    return f"+ {value:.2f}%" if value > 0 else f"- {value:.2f}%"
+
 def FilterMonths(year, min_date, max_date):
     months = list(range(1, 13))
     if year == min_date.year and year == max_date.year:
