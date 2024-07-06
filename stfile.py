@@ -144,7 +144,7 @@ def modify_detail_df(stocks_group, profit_ratios_group, dates, _t=None):
     formatted_infos = []
     for stocks, profits in zip(stocks_group, profit_ratios_group):
         info_list = [
-            f"<p style='color: red;'>{stock}<br>▲{profit}%</p>" if profit > 0 else f"<p style='color: green;'>{stock}<br>▼{str(profit)[1:]}%</p>"
+            f"{stock}(+{profit}%)" if profit > 0 else f"{stock}(-{str(profit)[1:]}%)"
             for stock, profit in zip(stocks, profits)
         ]
         formatted_infos.append(info_list)
@@ -445,13 +445,14 @@ if chosen_id == "2":
                                 align='center',
                                 line_color='darkslategray',
                                 line_width=2,
-                                font=dict(size=14, color='black')
+                                font=dict(size=14, color="black")
                             ),
                     cells=dict(values=[result[duration_label], result['Start Balance'], result['Change'], result['End Balance'], result['ROI (%)']],
                             fill_color=[fill_colors],
                             align='center',
                             line_color='darkslategray',
-                            line_width=1
+                            line_width=1,
+                            font=dict(size=14, color="black")
                             )
                 ))
 
@@ -613,5 +614,33 @@ if chosen_id == "3":
 
             # Displayed detailed information
             df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates, _t)
-            st.markdown(CSS+df_detail_info.to_html(escape=False, index=False), unsafe_allow_html=True)
+
+            fill_colors = [['lightgray', 'white'] * (len(df_detail_info) // 2 + 1)][0][:len(df_detail_info)]
+            fig = go.Figure(data=go.Table(
+                header=dict(
+                    values=df_detail_info.columns,
+                    fill_color='white',
+                    align='center',
+                    line_color='darkslategray',
+                    line_width=2,
+                    font=dict(size=14, color="black")
+                ),
+                cells=dict(
+                    values=[df_detail_info.iloc[:, i] for i in range(len(df_detail_info.columns))],
+                    fill_color=[fill_colors],
+                    align='center',
+                    line_color='darkslategray',
+                    line_width=1,
+                    font=dict(size=14, color="black")
+                )
+            ))
+
+            fig.update_layout(
+                    margin=dict(l=5, r=5, b=10, t=10),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)'
+                )
+            
+            st.write(fig)
+            
 
