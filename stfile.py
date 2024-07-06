@@ -136,7 +136,7 @@ def modify_detail_df(stocks_group, profit_ratios_group, dates, _t=None):
 
     # Create date intervals for the data frame
     date_intervals = [
-        f"{dates[i]} to {str(datetime.strptime(dates[i+1], '%Y-%m-%d')-timedelta(days=1)).split(' ')[0]}" 
+        f"{dates[i][:4]}~{dates[i+1][:4]}" 
         for i in range(len(dates)-1)
         ]
 
@@ -463,47 +463,18 @@ if chosen_id == "2":
 
 if chosen_id == "3":
 
-    # Select the duration type
-    duration_type = st.selectbox(_t("Portfolio Turnover Frequency:"), [_t("Quarter"), _t("Year")], key="RSS1")
 
+    # Set list of year available    
+    valid_year = get_valid_end_year()
+    years = list(np.arange(2018, valid_year+1))
 
+    # Select start year
+    start_year = st.selectbox(_t("Start Year:"), years, key="RSS3")
+    start_date = f"{start_year}-01"
 
-    if duration_type == _t("Quarter"):
-        quarter_month_map = {
-        "Q1": (1, 3),
-        "Q2": (4, 6),
-        "Q3": (7, 9),
-        "Q4": (10, 12)
-        }
-        valid_year, valid_quarter = get_valid_end_quarter()
-
-        # Select start year and quarter
-        years = list(np.arange(2018, valid_year+1))
-
-        start_year = st.selectbox(_t("Start Year:"), years, key="RSS3")
-        quarters_select = ["Q1", "Q2", "Q3", "Q4"][:valid_quarter if start_year == valid_year else 4]
-        start_quarter = st.selectbox(_t("Start Quarter:"), quarters_select, key="RSS5")
-        start_month = quarter_month_map[start_quarter][0]
-        start_date = f"{start_year}-{str(start_month).zfill(2)}"
-
-        # Select end year and quarter
-        end_year = st.selectbox(_t("End Year:"), years, key="RSS4")
-        quarters_select = ["Q1", "Q2", "Q3", "Q4"][:valid_quarter if end_year == valid_year else 4]
-        end_quarter = st.selectbox(_t("End Quarter:"), quarters_select, key="RSS6")
-        end_month = quarter_month_map[end_quarter][1]
-        end_date = f"{end_year}-{str(end_month).zfill(2)}"
-
-    elif duration_type == _t("Year"):
-        valid_year = get_valid_end_year()
-        years = list(np.arange(2018, valid_year+1))
-
-        # Select start year
-        start_year = st.selectbox(_t("Start Year:"), years, key="RSS3")
-        start_date = f"{start_year}-01"
-
-        # Select end year
-        end_year = st.selectbox(_t("End Year:"), years, key="RSS4")
-        end_date = f"{end_year+1}-01"
+    # Select end year
+    end_year = st.selectbox(_t("End Year:"), years, key="RSS4")
+    end_date = f"{end_year+1}-01"
 
     # Select stock category
     options = [_t("All"), _t("ETF"), _t("Financial and Insurance"), 
@@ -522,7 +493,7 @@ if chosen_id == "3":
             st.write(_t("Please select a valid date range (End year > Start year)"))
         else:
             new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
-                start_date, end_date, duration_type, num_stock, choice, 1000, KEY_PATH, progress_callback
+                start_date, end_date, num_stock, choice, 1000, KEY_PATH, progress_callback, invest_interval=_t("Year"), 
             )
 
             df_plot = pd.DataFrame({
