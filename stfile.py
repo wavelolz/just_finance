@@ -15,7 +15,7 @@ import uuid
 # Custom module imports
 from etl_process import FetchDatasetList, FetchData, FetchChineseName, CleanData, ExtractMarketCloseDate
 from random_stock_select import MonkeySelectStock
-from regular_investment_plan import FilterMonths, FilterQuarters, CalculateInvestmentReturns
+from regular_investment_plan import FilterMonths, FilterQuarters, CalculateInvestmentReturns, FormatChange, FormatRatio, FormatNumber
 from user_behavior_tracker import save_user_session, save_tab_click_counter
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -263,33 +263,42 @@ if chosen_id == "1":
 
 if chosen_id == "2":
 
-    # Set the title of the app
-    st.title("Regular Investment Plan")
-    
+    # Main content with better formatting
+    st.markdown("""
+    #### 定期定額怎麼買? 存股變存骨? 存銀行又怕錢錢被通膨吃掉?
+
+    在這裡你可以模擬台灣上市公司股票定期定額情況。
+
+    只要輸入資訊，就能立即獲得過往回測結果，並快速與大盤臺灣 0050 比對。
+
+    讓你找到克服市場波動的成長股，       
+    持續增加資產，        
+    打造自己穩健的財富堡壘。
+    """)
     # Create three columns with a 1:1:2 ratio
     col1, col2 = st.columns([1, 1])
     with col1:
-        st.subheader("Select Monthly Investment Account")
+        st.subheader("選定定期定額方式")
 
         # Fetch the list of stock IDs
         stock_list = FetchChineseName(KEY_PATH)
 
         # Select a stock from the list
-        selected_stock = st.selectbox(_t("Stock List"), stock_list, key="G1")
-        selected_stock = str("s" + selected_stock.split("-")[0])
+        selected_stock_label = st.selectbox(_t("選擇股票代碼"), stock_list, key="G1")
+        selected_stock = str("s" + selected_stock_label.split("-")[0])
 
         # Select duration type: month, quarter, or year
-        duration_type = st.selectbox("Select investment frequency:", ["Month", "Quarter", "Year"])
+        duration_type = st.selectbox("選擇投資頻率:", ["Month", "Quarter", "Year"])
         
         # Create a text input widget for monthly investment amount
-        user_input = st.text_input("Money you invest every time", value=1000)
+        user_input = st.text_input("輸入每次注資額度", value=1000)
         MIA = int(user_input)  # Default to 1000 if no input
 
         
     with col2:
         
 
-        st.subheader("Select Starting and Ending Date")
+        st.subheader("選擇起始時間")
         # Load the stock data file based on the selected stock code
         data = FetchData("stock", selected_stock, KEY_PATH)
         data = CleanData(data)
@@ -322,29 +331,29 @@ if chosen_id == "2":
         years = list(range(min_date.year, max_date.year + 1))
 
         if duration_type == "Month":
-            start_year = st.selectbox("Start Year:", years, index=len(years) - 1)
+            start_year = st.selectbox("開始年份:", years, index=len(years) - 1)
             valid_start_months = FilterMonths(start_year, min_date, max_date)
-            start_month = st.selectbox("Start Month:", valid_start_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
+            start_month = st.selectbox("開始月份:", valid_start_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
             
-            end_year = st.selectbox("End Year:", years, index=len(years) - 1)
+            end_year = st.selectbox("結束年份:", years, index=len(years) - 1)
             valid_end_months = FilterMonths(end_year, min_date, max_date)
-            end_month = st.selectbox("End Month:", valid_end_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
+            end_month = st.selectbox("結束月份:", valid_end_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
             
         elif duration_type == "Quarter":
-            start_year = st.selectbox("Start Year:", years, index=len(years) - 1)
+            start_year = st.selectbox("開始年份:", years, index=len(years) - 1)
             valid_start_quarters = FilterQuarters(start_year, min_date, max_date)
-            start_quarter = st.selectbox("Start Quarter:", valid_start_quarters)
+            start_quarter = st.selectbox("開始季別:", valid_start_quarters)
             
-            end_year = st.selectbox("End Year:", years, index=len(years) - 1)
+            end_year = st.selectbox("結束年份:", years, index=len(years) - 1)
             valid_end_quarters = FilterQuarters(end_year, min_date, max_date)
-            end_quarter = st.selectbox("End Quarter:", valid_end_quarters)
+            end_quarter = st.selectbox("結束季別:", valid_end_quarters)
             
             start_month = quarter_month_map[start_quarter][0]
             end_month = quarter_month_map[end_quarter][1]
 
         elif duration_type == "Year":
-            start_year = st.selectbox("Start Year:", years, index=len(years) - 1)
-            end_year = st.selectbox("End Year:", years, index=len(years) - 1)
+            start_year = st.selectbox("開始年份:", years, index=len(years) - 1)
+            end_year = st.selectbox("結束年份:", years, index=len(years) - 1)
             
             start_month = 1
             end_month = 12
@@ -380,85 +389,85 @@ if chosen_id == "2":
             })
 
 
-        with st.container():
-            if start_year and start_month and end_year and end_month:
-                st.subheader("See what you earn")
+    with st.container():
+        if start_year and start_month and end_year and end_month:
+            st.subheader("回測分析結果")
 
-                st.write(f"When you have invested a total of {start_balance[-1]} NT dollars over {duration[-1]} months,")
-                individual_change = end_balance[-1] - start_balance[-1]
-                individual_ratio = ROI[-1]
-                etf_change = end_balance_0050[-1] - start_balance_0050[-1]
-                etf_ratio = ROI_0050[-1]
-                text1 = "Your strategy"
-                text2 = "Invest in ETF 0050"
+            st.write(f"你在 {start_date.strftime(r'%Y-%m-%d')} 到 {end_date.strftime(r'%Y-%m-%d')} 這段期間，\
+                     總投資 {start_balance[-1]} 新台幣後， \
+                     你的資產變動為")
+            individual_change = end_balance[-1] - start_balance[-1]
+            individual_ratio = ROI[-1]
+            etf_change = end_balance_0050[-1] - start_balance_0050[-1]
+            etf_ratio = ROI_0050[-1]
+            stock_label = selected_stock_label.split("-")[1]
+            text1 = f"{stock_label}"
+            text2 = f"元大台灣50"
 
-                # Round the numbers to two decimal places
-                individual_change = round(individual_change, 2)
-                individual_ratio = round(individual_ratio, 2)
-                etf_change = round(etf_change, 2)
-                etf_ratio = round(etf_ratio, 2)
-                print(individual_change)
-                # Add the currency symbol and signs for numbers
-                display_individual_change = f"+ {individual_change:.2f} NT" if individual_change > 0 else f"- {-individual_change:.2f} NT"
-                display_etf_change = f"+ {etf_change:.2f} NT" if etf_change > 0 else f"- {-etf_change:.2f} NT"
+            # Round the numbers to two decimal places
+            individual_change = round(individual_change, 2)
+            individual_ratio = round(individual_ratio, 2)
+            etf_change = round(etf_change, 2)
+            etf_ratio = round(etf_ratio, 2)
+            print(individual_change)
+            # Formatted display strings
+            display_individual_change = FormatChange(individual_change)
+            display_etf_change = FormatChange(etf_change)
+            display_individual_ratio = FormatRatio(individual_ratio)
+            display_etf_ratio = FormatRatio(etf_ratio)
+            # Create two columns
+            col1, col2 = st.columns(2)
 
-                # Add signs for percentages
-                display_individual_ratio = f"+ {individual_ratio:.2f}%" if individual_ratio > 0 else f"- {-individual_ratio:.2f}%"
-                display_etf_ratio = f"+ {etf_ratio:.2f}%" if etf_ratio > 0 else f"- {-etf_ratio:.2f}%"
+            # Display the descriptions in the first row with larger font size
+            col1.metric(text1, display_individual_change, display_individual_ratio)
+            col2.metric(text2, display_etf_change, display_etf_ratio)
 
-                # Create two columns
-                col1, col2 = st.columns(2)
+            
+            # st.write(f"投資期間: {start_date.strftime(r'%Y-%m-%d')} to {end_date.strftime(r'%Y-%m-%d')}")
+            
+            # Initialize the session state if not already done
+            if 'show_options' not in st.session_state:
+                st.session_state.show_options = False
+            # Function to toggle the state
+            def toggle_options():
+                st.session_state.show_options = not st.session_state.show_options
+            st.button("Detail", on_click=toggle_options)
+            
+            if st.session_state.show_options:
+                st.markdown(f'<p style="color:gray; font-style:italic;">The ROI of Stock 0050 is {ROI_0050[-1]} in this duration</p>', unsafe_allow_html=True)
 
-                # Display the descriptions in the first row with larger font size
-                col1.metric(text1, display_individual_change, display_individual_ratio)
-                col2.metric(text2, display_etf_change, display_etf_ratio)
+                # Generate alternating colors for each row
+                fill_colors = [['lightgray', 'white'] * (len(result) // 2 + 1)][0][:len(result)]
 
-                
-                st.write(f"Investment Duration: {start_date.strftime(r'%Y-%m-%d')} to {end_date.strftime(r'%Y-%m-%d')}")
-                
-                # Initialize the session state if not already done
-                if 'show_options' not in st.session_state:
-                    st.session_state.show_options = False
-                # Function to toggle the state
-                def toggle_options():
-                    st.session_state.show_options = not st.session_state.show_options
-                st.button("Detail", on_click=toggle_options)
-                
-                if st.session_state.show_options:
-                    st.markdown(f'<p style="color:gray; font-style:italic;">The ROI of Stock 0050 is {ROI_0050[-1]} in this duration</p>', unsafe_allow_html=True)
-
-                    # Generate alternating colors for each row
-                    fill_colors = [['lightgray', 'white'] * (len(result) // 2 + 1)][0][:len(result)]
-
-                    fig = go.Figure(data=go.Table(
-                        header=dict(values=list(result[[duration_label, 'Start Balance', 'Change',  'End Balance', 'ROI (%)']].columns),
-                                    fill_color='white',
-                                    align='center',
-                                    line_color='darkslategray',
-                                    line_width=2,
-                                    font=dict(size=14, color='black')
-                                ),
-                        cells=dict(values=[result[duration_label], result['Start Balance'], result['Change'], result['End Balance'], result['ROI (%)']],
-                                fill_color=[fill_colors],
+                fig = go.Figure(data=go.Table(
+                    header=dict(values=list(result[[duration_label, 'Start Balance', 'Change',  'End Balance', 'ROI (%)']].columns),
+                                fill_color='white',
                                 align='center',
                                 line_color='darkslategray',
-                                line_width=1
-                                )
-                    ))
+                                line_width=2,
+                                font=dict(size=14, color='black')
+                            ),
+                    cells=dict(values=[result[duration_label], result['Start Balance'], result['Change'], result['End Balance'], result['ROI (%)']],
+                            fill_color=[fill_colors],
+                            align='center',
+                            line_color='darkslategray',
+                            line_width=1
+                            )
+                ))
 
 
-                    # Update layout
-                    fig.update_layout(
-                        margin=dict(l=5, r=5, b=10, t=10),
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        plot_bgcolor='rgba(0,0,0,0)'
-                    )
+                # Update layout
+                fig.update_layout(
+                    margin=dict(l=5, r=5, b=10, t=10),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)'
+                )
 
-                    
+                
 
-                    st.write(fig)
-            else:
-                st.header("起始日必在終止日前")
+                st.write(fig)
+        else:
+            st.header("起始日必在終止日前")
 
 if chosen_id == "3":
 
