@@ -390,50 +390,40 @@ if chosen_id == "2":
 
 
     with st.container():
-        if start_year and start_month and end_year and end_month:
-            st.subheader("回測分析結果")
+        
+        if st.button("Start"):
+            if start_year and start_month and end_year and end_month:
+                st.subheader("回測分析結果")
 
-            st.write(f"你在 {start_date.strftime(r'%Y-%m-%d')} 到 {end_date.strftime(r'%Y-%m-%d')} 這段期間，\
-                     總投資 {start_balance[-1]} 新台幣後， \
-                     你的資產變動為")
-            individual_change = end_balance[-1] - start_balance[-1]
-            individual_ratio = ROI[-1]
-            etf_change = end_balance_0050[-1] - start_balance_0050[-1]
-            etf_ratio = ROI_0050[-1]
-            stock_label = selected_stock_label.split("-")[1]
-            text1 = f"{stock_label}"
-            text2 = f"元大台灣50"
+                st.write(f"你在 {start_date.strftime(r'%Y-%m-%d')} 到 {end_date.strftime(r'%Y-%m-%d')} 這段期間，\
+                        總投資 {start_balance[-1]} 新台幣後， \
+                        你的資產變動為")
+                individual_change = end_balance[-1] - start_balance[-1]
+                individual_ratio = ROI[-1]
+                etf_change = end_balance_0050[-1] - start_balance_0050[-1]
+                etf_ratio = ROI_0050[-1]
+                stock_label = selected_stock_label.split("-")[1]
+                text1 = f"{stock_label}"
+                text2 = f"元大台灣50"
 
-            # Round the numbers to two decimal places
-            individual_change = round(individual_change, 2)
-            individual_ratio = round(individual_ratio, 2)
-            etf_change = round(etf_change, 2)
-            etf_ratio = round(etf_ratio, 2)
-            print(individual_change)
-            # Formatted display strings
-            display_individual_change = FormatChange(individual_change)
-            display_etf_change = FormatChange(etf_change)
-            display_individual_ratio = FormatRatio(individual_ratio)
-            display_etf_ratio = FormatRatio(etf_ratio)
-            # Create two columns
-            col1, col2 = st.columns(2)
+                # Round the numbers to two decimal places
+                individual_change = round(individual_change, 2)
+                individual_ratio = round(individual_ratio, 2)
+                etf_change = round(etf_change, 2)
+                etf_ratio = round(etf_ratio, 2)
 
-            # Display the descriptions in the first row with larger font size
-            col1.metric(text1, display_individual_change, display_individual_ratio)
-            col2.metric(text2, display_etf_change, display_etf_ratio)
+                # Formatted display strings
+                display_individual_change = FormatChange(individual_change)
+                display_etf_change = FormatChange(etf_change)
+                display_individual_ratio = FormatRatio(individual_ratio)
+                display_etf_ratio = FormatRatio(etf_ratio)
+                # Create two columns
+                col1, col2 = st.columns(2)
 
-            
-            # st.write(f"投資期間: {start_date.strftime(r'%Y-%m-%d')} to {end_date.strftime(r'%Y-%m-%d')}")
-            
-            # Initialize the session state if not already done
-            if 'show_options' not in st.session_state:
-                st.session_state.show_options = False
-            # Function to toggle the state
-            def toggle_options():
-                st.session_state.show_options = not st.session_state.show_options
-            st.button("Detail", on_click=toggle_options)
-            
-            if st.session_state.show_options:
+                # Display the descriptions in the first row with larger font size
+                col1.metric(text1, display_individual_change, display_individual_ratio)
+                col2.metric(text2, display_etf_change, display_etf_ratio)
+
                 st.markdown(f'<p style="color:gray; font-style:italic;">The ROI of Stock 0050 is {ROI_0050[-1]} in this duration</p>', unsafe_allow_html=True)
 
                 # Generate alternating colors for each row
@@ -464,11 +454,12 @@ if chosen_id == "2":
                     plot_bgcolor='rgba(0,0,0,0)'
                 )
 
-                
-
                 st.write(fig)
-        else:
-            st.header("起始日必在終止日前")
+            else:
+                st.header("起始日必在終止日前")
+
+            
+
 
 if chosen_id == "3":
 
