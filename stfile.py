@@ -18,6 +18,9 @@ from random_stock_select import MonkeySelectStock
 from regular_investment_plan import FilterMonths, FilterQuarters, CalculateInvestmentReturns, FormatChange, FormatRatio, FormatNumber
 from user_behavior_tracker import save_user_session, save_tab_click_counter
 
+
+st.set_page_config(layout="wide")
+
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 KEY_PATH = os.path.join(DIR_PATH, "secret_info/stockaroo-privatekey.json")
 
@@ -57,6 +60,17 @@ CSS = """
 </style>
 """
 
+CSS_main = """
+    <style>
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+    </style>
+"""
+
 
 
 def filter_date(data, code):
@@ -83,27 +97,6 @@ def filter_date(data, code):
     
     return data
 
-def get_valid_end_quarter():
-    """
-    Get the valid end quarter for date range available.
-    
-    Returns:
-        tuple: A tuple containing the year and the valid quarter.
-    """
-    today = date.today()
-    year = today.year
-    month = today.month
-
-    if month<4:
-        year -= 1
-        quarter = 4
-    elif month<7:
-        quarter = 1
-    elif month<10:
-        quarter = 2
-    else:
-        quarter = 3
-    return year, quarter
 
 def get_valid_end_year():
     """
@@ -212,6 +205,7 @@ if st.session_state['active_tab'] != int(chosen_id):
         st.session_state['tab3'] += 1
         save_tab_click_counter(st.session_state['user_id'], "tab3_click_count", st.session_state['tab3'], KEY_PATH)
 
+        
 if chosen_id == "1":
     # Fetch the list of stock IDs
     stock_list = FetchChineseName(KEY_PATH)
@@ -284,7 +278,7 @@ if chosen_id == "2":
         stock_list = FetchChineseName(KEY_PATH)
 
         # Select a stock from the list
-        selected_stock_label = st.selectbox(_t("選擇股票代碼"), stock_list, key="G1")
+        selected_stock_label = st.selectbox(_t("選擇股票代碼"), stock_list, key="RIP1")
         selected_stock = str("s" + selected_stock_label.split("-")[0])
 
         # Select duration type: month, quarter, or year
@@ -391,7 +385,7 @@ if chosen_id == "2":
 
     with st.container():
         
-        if st.button("Start"):
+        if st.button("Start", key="RIP2"):
             if start_year and start_month and end_year and end_month:
                 st.subheader("回測分析結果")
 
@@ -459,150 +453,232 @@ if chosen_id == "2":
                 st.header("起始日必在終止日前")
 
             
-
-
 if chosen_id == "3":
-
-
+    col1, col2 = st.columns([1, 1])
     # Set list of year available    
-    valid_year = get_valid_end_year()
-    years = list(np.arange(2018, valid_year+1))
 
-    # Select start year
-    start_year = st.selectbox(_t("Start Year:"), years, key="RSS3")
-    start_date = f"{start_year}-01"
+    with col1:
 
-    # Select end year
-    end_year = st.selectbox(_t("End Year:"), years, key="RSS4")
-    end_date = f"{end_year+1}-01"
+        st.subheader("Please select time range and number of stocks to be sampled")
+        valid_year = get_valid_end_year()
+        years = list(np.arange(2018, valid_year+1))
 
-    # Select stock category
-    options = [_t("All"), _t("ETF"), _t("Financial and Insurance"), 
-               _t("Electrical and Mechanical"), _t("Electronic Industry"), 
-               _t("Telecommunications and Networking Industry"), _t("Semiconductor Industry"), 
-               _t("Computer and Peripheral Equipment Industry")]
-    choice = st.radio(_t("Please select an industry"), options)
+        # Select start year
+        start_year = st.selectbox(_t("Start Year:"), years, key="RSS3")
+        start_date = f"{start_year}-01"
 
+        # Select end year
+        end_year = st.selectbox(_t("End Year:"), years, index=1, key="RSS4")
+        end_date = f"{end_year+1}-01"
 
-    # Select number of stocks 
-    num_stock = st.selectbox(_t("Number of stocks"), [i+1 for i in range(5)])
+        # Select number of stocks 
+        num_stock = st.selectbox(_t("Number of stocks"), [i+1 for i in range(5)])
 
-    progress_bar = st.progress(0)
-    if st.button(_t("Start")):
-        if end_year <= start_year:
-            st.write(_t("Please select a valid date range (End year > Start year)"))
-        else:
-            new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
-                start_date, end_date, num_stock, choice, 1000, KEY_PATH, progress_callback, invest_interval=_t("Year"), 
-            )
+    with col2:
 
-            df_plot = pd.DataFrame({
-                "balance" : new_balances,
-                "balance_0050" : new_balances_0050,
-                "date" : dates
-            })
-
-            
-
-            # Plot the balance over time
-            fig = px.line(df_plot, x="date", y=["balance", "balance_0050"], title=_t("Balance of Random Stock Selection Plan"))
-            st.plotly_chart(fig)
+        st.subheader("Please select an industry")
+        # Select stock category
+        options = [_t("All"), _t("ETF"), _t("Financial and Insurance"), 
+                _t("Electrical and Mechanical"), _t("Electronic Industry"), 
+                _t("Telecommunications and Networking Industry"), _t("Semiconductor Industry"), 
+                _t("Computer and Peripheral Equipment Industry")]
+        choice = st.radio(_t("The program will sample stocks from selected industry only"), options)
 
 
-            # Provide summary statistics
-            profit_ratio_random = np.round((new_balances[-1]-1000)/1000*100, 2)
-            profit_ratio_0050 = np.round((new_balances_0050[-1]-1000)/1000*100, 2)
-            profit_ratio_difference = np.round(profit_ratio_random-profit_ratio_0050, 2)
-            
 
-            html_code = f"""
-            <style>
-            .container {{
-                display: flex;
-                justify-content: space-around;  /* Use space-around to center the metrics */
-                margin-bottom: 20px;
-            }}
-
-            .metric {{
-                text-align: center;
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                min-width: 220px; /* Set a minimum width to ensure space between metrics */
-            }}
-
-            .metric::after {{
-                content: '';
-                position: absolute;
-                right: -10px; /* Adjust the position to be just outside the padding */
-                top: 10%; /* Adjust this value to center the line vertically */
-                height: 80%; /* Adjust this value to change the line height */
-                border-right: 1px solid #e0e0e0;
-            }}
-
-            .metric:last-child::after {{
-                content: none;
-            }}
-
-            .metric-title {{
-                font-size: 16px;
-                white-space: nowrap; /* Prevents breaking into multiple lines */
-            }}
-
-            .metric-value {{
-                font-size: 32px;
-                font-weight: bold;
-            }}
-            </style>
-
-            <div class="container">
-                <div class="metric">
-                    <div class="metric-title">{_t("Return Rate of Random Stock Selection Plan")}</div>
-                    <div class="metric-value" style="color: {get_color(profit_ratio_random)};">{format_value(profit_ratio_random)}</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-title">{_t("Return Rate of 0050")}</div>
-                    <div class="metric-value" style="color: {get_color(profit_ratio_0050)};">{format_value(profit_ratio_0050)}</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-title">{_t("Comparison with 0050")}</div>
-                    <div class="metric-value" style="color: {get_color(profit_ratio_difference)};">{format_value(profit_ratio_difference)}</div>
-                </div>
-            </div>
-            """
-
-            st.markdown(html_code, unsafe_allow_html=True)
-
-            # Displayed detailed information
-            df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates, _t)
-
-            fill_colors = [['lightgray', 'white'] * (len(df_detail_info) // 2 + 1)][0][:len(df_detail_info)]
-            fig = go.Figure(data=go.Table(
-                header=dict(
-                    values=df_detail_info.columns,
-                    fill_color='white',
-                    align='center',
-                    line_color='darkslategray',
-                    line_width=2,
-                    font=dict(size=14, color="black")
-                ),
-                cells=dict(
-                    values=[df_detail_info.iloc[:, i] for i in range(len(df_detail_info.columns))],
-                    fill_color=[fill_colors],
-                    align='center',
-                    line_color='darkslategray',
-                    line_width=1,
-                    font=dict(size=14, color="black")
+    with st.container():
+        progress_bar = st.progress(0)
+        if st.button(_t("Start"), key="RSSP1"):
+            if end_year <= start_year:
+                st.write(_t("Please select a valid date range (End year > Start year)"))
+            else:
+                new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
+                    start_date, end_date, num_stock, choice, 1000, KEY_PATH, progress_callback, invest_interval=_t("Year"), 
                 )
-            ))
 
-            fig.update_layout(
-                    margin=dict(l=5, r=5, b=10, t=10),
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)'
+
+                difference = np.round((np.array(new_balances)-np.array(new_balances_0050))/np.array(new_balances_0050)*100)
+                df_plot = pd.DataFrame({
+                    "change_of_portfolio" : [np.round((new_balances[i+1]-new_balances[0])/new_balances[0]*100, 2) for i in range(len(new_balances)-1)],
+                    "change_of_0050" : [np.round((new_balances_0050[i+1]-new_balances_0050[0])/new_balances_0050[0]*100, 2) for i in range(len(new_balances_0050)-1)],
+                    "date" : dates[1:]
+                })
+                
+
+                # Plot the balance over time
+                fig = go.Figure(data=[
+                    go.Bar(
+                        x=df_plot['date'],
+                        y=df_plot['change_of_portfolio'],
+                        marker_color="#FFA117",
+                        name="Randomly Stock Selection Plan"
+                    ),
+                    go.Bar(
+                        x=df_plot['date'],
+                        y=df_plot['change_of_0050'],
+                        marker_color="#6BC2FF",
+                        name="0050"
+                    )
+                ])
+
+                stack_y_value = list(df_plot["change_of_portfolio"])+list(df_plot["change_of_0050"])
+
+                yaxis = np.linspace(min(stack_y_value), max(stack_y_value)+10, 8)
+                yaxis = [int(np.round(i)) for i in yaxis]
+                # Customize the layout
+                fig.update_layout(
+                    title = dict(
+                        text='Percentage of Difference of market value between portfolio and 0050',
+                        font=dict(
+                            size=20,
+                            family="Arial Black"
+                        ),
+                        x=0.5,
+                        xanchor="center"
+                    ),
+
+                    legend = dict(
+                        yanchor="top",
+                        y=0.99,
+                        xanchor="left",
+                        x=0.01
+                    ),
+
+                    xaxis = dict(
+                        title=dict(
+                            text="Date",
+                            font=dict(
+                                size=16,
+                                family="Arial"
+                            )
+                        ),
+                        tickfont=dict(
+                            size=12,
+                            family="Arial Black"
+                        ),
+                        tickmode="array",
+                        tickvals=df_plot["date"],
+                        ticktext=[f"{dates[i][:4]}~{dates[i+1][:4]}" for i in range(len(dates)-1)]
+                    ),
+
+                    yaxis = dict(
+                        title=dict(
+                            text="Percentage of Difference",
+                            font=dict(
+                                size=16,
+                                family="Arial"
+                            )
+                        ),
+                        tickfont=dict(
+                            size=12,
+                            family="Arial Black"
+                        ),
+                        tickmode="array",
+                        tickvals=yaxis,
+                        ticktext=[str(i)+"%" for i in yaxis]
+                    ),
+                    bargap=0.5
                 )
-            
-            st.write(fig)
-            
 
+                st.plotly_chart(fig, use_container_width=True)
+
+
+                # Provide summary statistics
+                profit_ratio_random = np.round((new_balances[-1]-1000)/1000*100, 2)
+                profit_ratio_0050 = np.round((new_balances_0050[-1]-1000)/1000*100, 2)
+                profit_ratio_difference = np.round(profit_ratio_random-profit_ratio_0050, 2)
+                
+
+                html_code = f"""
+                <style>
+                .container {{
+                    display: flex;
+                    justify-content: space-around;  /* Use space-around to center the metrics */
+                    margin-bottom: 20px;
+                }}
+
+                .metric {{
+                    text-align: center;
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    min-width: 220px; /* Set a minimum width to ensure space between metrics */
+                }}
+
+                .metric::after {{
+                    content: '';
+                    position: absolute;
+                    right: -10px; /* Adjust the position to be just outside the padding */
+                    top: 10%; /* Adjust this value to center the line vertically */
+                    height: 80%; /* Adjust this value to change the line height */
+                    border-right: 1px solid #e0e0e0;
+                }}
+
+                .metric:last-child::after {{
+                    content: none;
+                }}
+
+                .metric-title {{
+                    font-size: 16px;
+                    white-space: nowrap; /* Prevents breaking into multiple lines */
+                }}
+
+                .metric-value {{
+                    font-size: 32px;
+                    font-weight: bold;
+                }}
+                </style>
+
+                <div class="container">
+                    <div class="metric">
+                        <div class="metric-title">{_t("Return Rate of Randomly Stock Selection Plan")}</div>
+                        <div class="metric-value" style="color: {get_color(profit_ratio_random)};">{format_value(profit_ratio_random)}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-title">{_t("Return Rate of 0050")}</div>
+                        <div class="metric-value" style="color: {get_color(profit_ratio_0050)};">{format_value(profit_ratio_0050)}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-title">{_t("Comparison with 0050")}</div>
+                        <div class="metric-value" style="color: {get_color(profit_ratio_difference)};">{format_value(profit_ratio_difference)}</div>
+                    </div>
+                </div>
+                """
+
+                st.markdown(html_code, unsafe_allow_html=True)
+
+                # Displayed detailed information
+                df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates, _t)
+
+                fill_colors = [['lightgray', 'white'] * (len(df_detail_info) // 2 + 1)][0][:len(df_detail_info)]
+                fig = go.Figure(data=go.Table(
+                    header=dict(
+                        values=df_detail_info.columns,
+                        fill_color='white',
+                        align='center',
+                        line_color='darkslategray',
+                        line_width=2,
+                        font=dict(size=14, color="black")
+                    ),
+                    cells=dict(
+                        values=[df_detail_info.iloc[:, i] for i in range(len(df_detail_info.columns))],
+                        fill_color=[fill_colors],
+                        align='center',
+                        line_color='darkslategray',
+                        line_width=1,
+                        font=dict(size=14, color="black")
+                    )
+                ))
+
+                fig.update_layout(
+                        margin=dict(l=0, r=0, b=10, t=10),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        width=1000
+                    )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+
+st.markdown(CSS_main, unsafe_allow_html=True)
