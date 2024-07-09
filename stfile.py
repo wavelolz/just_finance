@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.io as pio
 import polib
 import extra_streamlit_components as stx
 import uuid
@@ -20,6 +21,7 @@ from user_behavior_tracker import save_user_session, save_tab_click_counter
 
 
 st.set_page_config(layout="wide")
+pio.templates.default = "plotly_dark"
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 KEY_PATH = os.path.join(DIR_PATH, "secret_info/stockaroo-privatekey.json")
@@ -252,23 +254,52 @@ if chosen_id == "1":
     # Update the x-axis to exclude market close dates
     fig.update_xaxes(rangebreaks=[dict(values=market_close_dates)])
 
+    fig.update_layout(
+        title = dict(
+            text='Stock Trend',
+            font=dict(
+                size=20,
+                family="Arial Black"
+            ),
+            x=0.5,
+            xanchor="center"
+        ),
+
+        xaxis = dict(
+            title=dict(
+                text="Date",
+                font=dict(
+                    size=16,
+                    family="Arial"
+                )
+            ),
+            tickfont=dict(
+                size=12,
+                family="Arial Black"
+            ),
+        ),
+
+        yaxis = dict(
+            title=dict(
+                text="Price",
+                font=dict(
+                    size=16,
+                    family="Arial"
+                )
+            ),
+            tickfont=dict(
+                size=12,
+                family="Arial Black"
+            ),
+        ),
+    )
+
+
     # Display the plot
     st.plotly_chart(fig, use_container_width=True)
 
 if chosen_id == "2":
 
-    # Main content with better formatting
-    st.markdown("""
-    #### 定期定額怎麼買? 存股變存骨? 存銀行又怕錢錢被通膨吃掉?
-
-    在這裡你可以模擬台灣上市公司股票定期定額情況。
-
-    只要輸入資訊，就能立即獲得過往回測結果，並快速與大盤臺灣 0050 比對。
-
-    讓你找到克服市場波動的成長股，       
-    持續增加資產，        
-    打造自己穩健的財富堡壘。
-    """)
     # Create three columns with a 1:1:2 ratio
     col1, col2 = st.columns([1, 1])
     with col1:
