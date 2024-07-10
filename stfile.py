@@ -139,7 +139,7 @@ def modify_detail_df(stocks_group, profit_ratios_group, dates, _t=None):
     formatted_infos = []
     for stocks, profits in zip(stocks_group, profit_ratios_group):
         info_list = [
-            f"{stock}(+{profit}%)" if profit > 0 else f"{stock}(-{str(profit)[1:]}%)"
+            f"{stock} (+{profit}%)" if profit > 0 else f"{stock}(-{str(profit)[1:]}%)"
             for stock, profit in zip(stocks, profits)
         ]
         formatted_infos.append(info_list)
@@ -188,9 +188,9 @@ _t = lambda s: translations.get(s, s)
 
 # Define the tab bar
 chosen_id = stx.tab_bar(data=[
-    stx.TabBarItemData(id=1, title=_t("Stock Trend"), description="Track down latest stock trend"),
-    stx.TabBarItemData(id=2, title=_t("Regular Investment Plan"), description="Simulated Regular Saving Plan"),
-    stx.TabBarItemData(id=3, title=_t("Random Stock Selection Plan"), description="Surprise from Randomness"),
+    stx.TabBarItemData(id=1, title=_t("Stock Trend"), description=_t("Track down historical stock trend")),
+    stx.TabBarItemData(id=2, title=_t("Regular Investment Plan"), description=_t("Simulate regular saving plan")),
+    stx.TabBarItemData(id=3, title=_t("Random Stock Selection Plan"), description=_t("Surprise from Randomness")),
 ], default=1)
 
 # Update the click count based on the chosen tab
@@ -256,7 +256,7 @@ if chosen_id == "1":
 
     fig.update_layout(
         title = dict(
-            text='Stock Trend',
+            text=_t('Stock Trend'),
             font=dict(
                 size=20,
                 family="Arial Black"
@@ -267,7 +267,7 @@ if chosen_id == "1":
 
         xaxis = dict(
             title=dict(
-                text="Date",
+                text=_t("Date"),
                 font=dict(
                     size=16,
                     family="Arial"
@@ -281,7 +281,7 @@ if chosen_id == "1":
 
         yaxis = dict(
             title=dict(
-                text="Price",
+                text=_t("Price"),
                 font=dict(
                     size=16,
                     family="Arial"
@@ -303,27 +303,27 @@ if chosen_id == "2":
     # Create three columns with a 1:1:2 ratio
     col1, col2 = st.columns([1, 1])
     with col1:
-        st.subheader("選定定期定額方式")
+        st.subheader(_t("Please select investment frequency and amount"))
 
         # Fetch the list of stock IDs
         stock_list = FetchChineseName(KEY_PATH)
 
         # Select a stock from the list
-        selected_stock_label = st.selectbox(_t("選擇股票代碼"), stock_list, key="RIP1")
+        selected_stock_label = st.selectbox(_t("Please select stock to be invested"), stock_list, key="RIP1")
         selected_stock = str("s" + selected_stock_label.split("-")[0])
 
         # Select duration type: month, quarter, or year
-        duration_type = st.selectbox("選擇投資頻率:", ["Month", "Quarter", "Year"])
+        duration_type = st.selectbox(_t("Investment Frequency"), [_t("Month"), _t("Quarter"), _t("Year")])
         
         # Create a text input widget for monthly investment amount
-        user_input = st.text_input("輸入每次注資額度", value=1000)
+        user_input = st.text_input(_t("Please input money invested each time"), value=1000)
         MIA = int(user_input)  # Default to 1000 if no input
 
         
     with col2:
         
 
-        st.subheader("選擇起始時間")
+        st.subheader(_t("Please select time range"))
         # Load the stock data file based on the selected stock code
         data = FetchData("stock", selected_stock, KEY_PATH)
         data = CleanData(data)
@@ -355,30 +355,30 @@ if chosen_id == "2":
         # Get the years range based on the min and max dates
         years = list(range(min_date.year, max_date.year + 1))
 
-        if duration_type == "Month":
-            start_year = st.selectbox("開始年份:", years, index=len(years) - 1)
+        if duration_type == "Month" or duration_type == "月":
+            start_year = st.selectbox(_t("Start Year"), years, index=len(years) - 1)
             valid_start_months = FilterMonths(start_year, min_date, max_date)
-            start_month = st.selectbox("開始月份:", valid_start_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
+            start_month = st.selectbox(_t("Start Month"), valid_start_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
             
-            end_year = st.selectbox("結束年份:", years, index=len(years) - 1)
+            end_year = st.selectbox(_t("End Year"), years, index=len(years) - 1)
             valid_end_months = FilterMonths(end_year, min_date, max_date)
-            end_month = st.selectbox("結束月份:", valid_end_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
+            end_month = st.selectbox(_t("End Month"), valid_end_months, format_func=lambda x: datetime(1900, x, 1).strftime('%B'))
             
-        elif duration_type == "Quarter":
-            start_year = st.selectbox("開始年份:", years, index=len(years) - 1)
+        elif duration_type == "Quarter" or duration_type == "季":
+            start_year = st.selectbox(_t("Start Year"), years, index=len(years) - 1)
             valid_start_quarters = FilterQuarters(start_year, min_date, max_date)
-            start_quarter = st.selectbox("開始季別:", valid_start_quarters)
+            start_quarter = st.selectbox(_t("Start Quarter"), valid_start_quarters)
             
-            end_year = st.selectbox("結束年份:", years, index=len(years) - 1)
+            end_year = st.selectbox(_t("End Year"), years, index=len(years) - 1)
             valid_end_quarters = FilterQuarters(end_year, min_date, max_date)
-            end_quarter = st.selectbox("結束季別:", valid_end_quarters)
+            end_quarter = st.selectbox(_t("End Quarter"), valid_end_quarters)
             
             start_month = quarter_month_map[start_quarter][0]
             end_month = quarter_month_map[end_quarter][1]
 
-        elif duration_type == "Year":
-            start_year = st.selectbox("開始年份:", years, index=len(years) - 1)
-            end_year = st.selectbox("結束年份:", years, index=len(years) - 1)
+        elif duration_type == "Year" or duration_type == "年":
+            start_year = st.selectbox(_t("Start Year"), years, index=len(years) - 1)
+            end_year = st.selectbox(_t("End Year"), years, index=len(years) - 1)
             
             start_month = 1
             end_month = 12
@@ -398,11 +398,11 @@ if chosen_id == "2":
             duration, start_balance, end_balance, ROI = CalculateInvestmentReturns(filtered_data, duration_type, MIA)
             _, start_balance_0050, end_balance_0050, ROI_0050 = CalculateInvestmentReturns(filtered_data0050, duration_type, MIA)
             
-            if duration_type == "Month":
+            if duration_type == "Month" or duration_type == "月":
                 duration_label = 'Month'
-            elif duration_type == "Quarter":
+            elif duration_type == "Quarter" or duration_type == "季":
                 duration_label = 'Quarter'
-            elif duration_type == "Year":
+            elif duration_type == "Year" or duration_type == "年":
                 duration_label = 'Year'
 
             result = pd.DataFrame({
@@ -416,20 +416,18 @@ if chosen_id == "2":
 
     with st.container():
         
-        if st.button("Start", key="RIP2"):
+        if st.button(_t("Start"), key="RIP2"):
             if start_year and start_month and end_year and end_month:
-                st.subheader("回測分析結果")
-
-                st.write(f"你在 {start_date.strftime(r'%Y-%m-%d')} 到 {end_date.strftime(r'%Y-%m-%d')} 這段期間，\
-                        總投資 {start_balance[-1]} 新台幣後， \
-                        你的資產變動為")
+                st.subheader(_t("Backtesting Result"))
+                st.markdown(f"<p style='font-size: 24px;'>{_t('Investment Period: ')}{start_date.strftime(r'%Y-%m-%d')}~{end_date.strftime(r'%Y-%m-%d')}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='font-size: 24px'>{_t('Total Cost: ')}{start_balance[-1]}</p>", unsafe_allow_html=True)
                 individual_change = end_balance[-1] - start_balance[-1]
                 individual_ratio = ROI[-1]
                 etf_change = end_balance_0050[-1] - start_balance_0050[-1]
                 etf_ratio = ROI_0050[-1]
-                stock_label = selected_stock_label.split("-")[1]
+                stock_label = selected_stock_label
                 text1 = f"{stock_label}"
-                text2 = f"元大台灣50"
+                text2 = f"0050-元大台灣50"
 
                 # Round the numbers to two decimal places
                 individual_change = round(individual_change, 2)
@@ -449,13 +447,13 @@ if chosen_id == "2":
                 col1.metric(text1, display_individual_change, display_individual_ratio)
                 col2.metric(text2, display_etf_change, display_etf_ratio)
 
-                st.markdown(f'<p style="color:gray; font-style:italic;">The ROI of Stock 0050 is {ROI_0050[-1]} in this duration</p>', unsafe_allow_html=True)
+                st.markdown(f'<p style="color:gray; font-style:italic;">{_t("During this period, the ROI of 0050 is ")} {ROI_0050[-1]} %</p>', unsafe_allow_html=True)
 
                 # Generate alternating colors for each row
                 fill_colors = [['lightgray', 'white'] * (len(result) // 2 + 1)][0][:len(result)]
 
                 fig = go.Figure(data=go.Table(
-                    header=dict(values=list(result[[duration_label, 'Start Balance', 'Change',  'End Balance', 'ROI (%)']].columns),
+                    header=dict(values=[_t(name) for name in list(result[[duration_label, 'Start Balance', 'Change',  'End Balance', 'ROI (%)']].columns)],
                                 fill_color='white',
                                 align='center',
                                 line_color='darkslategray',
@@ -474,12 +472,11 @@ if chosen_id == "2":
 
                 # Update layout
                 fig.update_layout(
-                    margin=dict(l=5, r=5, b=10, t=10),
                     paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)'
+                    plot_bgcolor='rgba(0,0,0,0)',
                 )
 
-                st.write(fig)
+                st.plotly_chart(fig, use_container_width=True)
             else:
                 st.header("起始日必在終止日前")
 
@@ -490,16 +487,16 @@ if chosen_id == "3":
 
     with col1:
 
-        st.subheader("Please select time range and number of stocks to be sampled")
+        st.subheader(_t("Please select time range and number of stocks to be sampled"))
         valid_year = get_valid_end_year()
         years = list(np.arange(2018, valid_year+1))
 
         # Select start year
-        start_year = st.selectbox(_t("Start Year:"), years, key="RSS3")
+        start_year = st.selectbox(_t("Start Year"), years, key="RSS3")
         start_date = f"{start_year}-01"
 
         # Select end year
-        end_year = st.selectbox(_t("End Year:"), years, index=1, key="RSS4")
+        end_year = st.selectbox(_t("End Year"), years, index=1, key="RSS4")
         end_date = f"{end_year+1}-01"
 
         # Select number of stocks 
@@ -507,15 +504,13 @@ if chosen_id == "3":
 
     with col2:
 
-        st.subheader("Please select an industry")
+        st.subheader(_t("Please select an industry"))
         # Select stock category
         options = [_t("All"), _t("ETF"), _t("Financial and Insurance"), 
                 _t("Electrical and Mechanical"), _t("Electronic Industry"), 
                 _t("Telecommunications and Networking Industry"), _t("Semiconductor Industry"), 
                 _t("Computer and Peripheral Equipment Industry")]
         choice = st.radio(_t("The program will sample stocks from selected industry only"), options)
-
-
 
     with st.container():
         progress_bar = st.progress(0)
@@ -542,7 +537,7 @@ if chosen_id == "3":
                         x=df_plot['date'],
                         y=df_plot['change_of_portfolio'],
                         marker_color="#FFA117",
-                        name="Randomly Stock Selection Plan"
+                        name=_t("Random Stock Selection Plan")
                     ),
                     go.Bar(
                         x=df_plot['date'],
@@ -559,7 +554,7 @@ if chosen_id == "3":
                 # Customize the layout
                 fig.update_layout(
                     title = dict(
-                        text='Percentage of Difference of market value between portfolio and 0050',
+                        text=_t('ROI of Random Stock Selection Plan and 0050 (by year)'),
                         font=dict(
                             size=20,
                             family="Arial Black"
@@ -577,7 +572,7 @@ if chosen_id == "3":
 
                     xaxis = dict(
                         title=dict(
-                            text="Date",
+                            text=_t("Date"),
                             font=dict(
                                 size=16,
                                 family="Arial"
@@ -594,7 +589,7 @@ if chosen_id == "3":
 
                     yaxis = dict(
                         title=dict(
-                            text="Percentage of Difference",
+                            text=_t("ROI"),
                             font=dict(
                                 size=16,
                                 family="Arial"
@@ -634,7 +629,7 @@ if chosen_id == "3":
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    min-width: 220px; /* Set a minimum width to ensure space between metrics */
+                    min-width: 350px; /* Set a minimum width to ensure space between metrics */
                 }}
 
                 .metric::after {{
@@ -663,7 +658,7 @@ if chosen_id == "3":
 
                 <div class="container">
                     <div class="metric">
-                        <div class="metric-title">{_t("Return Rate of Randomly Stock Selection Plan")}</div>
+                        <div class="metric-title">{_t("Return Rate of Random Stock Selection Plan")}</div>
                         <div class="metric-value" style="color: {get_color(profit_ratio_random)};">{format_value(profit_ratio_random)}</div>
                     </div>
                     <div class="metric">
@@ -703,13 +698,9 @@ if chosen_id == "3":
                 ))
 
                 fig.update_layout(
-                        margin=dict(l=0, r=0, b=10, t=10),
                         paper_bgcolor='rgba(0,0,0,0)',
                         plot_bgcolor='rgba(0,0,0,0)',
-                        width=1000
                     )
                 
                 st.plotly_chart(fig, use_container_width=True)
                 
-
-st.markdown(CSS_main, unsafe_allow_html=True)

@@ -12,7 +12,7 @@ def FormatChange(value):
     return f"+ {FormatNumber(value)} NT" if value > 0 else f"- {FormatNumber(abs(value))} NT"
 
 def FormatRatio(value):
-    return f"+ {value:.2f}%" if value > 0 else f"- {value:.2f}%"
+    return f"+ {value:.2f}%" if value > 0 else f"{value:.2f}%"
 
 def FilterMonths(year, min_date, max_date):
     months = list(range(1, 13))
@@ -41,11 +41,11 @@ def FilterQuarters(year, min_date, max_date):
 
 def CalculateInvestmentReturns(filtered_data, duration_type, MIA=1000):
     if not filtered_data.empty:
-        if duration_type == "Month":
+        if duration_type == "Month" or duration_type == "月":
             group_cols = ['year', 'month']
-        elif duration_type == "Quarter":
+        elif duration_type == "Quarter" or duration_type == "季":
             group_cols = ['year', 'quarter']
-        elif duration_type == "Year":
+        elif duration_type == "Year" or duration_type == "年":
             group_cols = ['year']
         
         first_days = filtered_data.groupby(group_cols).first().reset_index(drop=True)

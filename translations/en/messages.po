@@ -7,6 +7,21 @@ msgstr "Regular Investment Plan"
 msgid "Random Stock Selection Plan"
 msgstr "Random Stock Selection Plan"
 
+msgid "Track down historical stock trend"
+msgstr "Track down historical stock trend"
+
+msgid "Simulate regular saving plan"
+msgstr "Simulate regular saving plan"
+
+msgid "Surprise from Randomness"
+msgstr "Surprise from Randomness"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Price"
+msgstr "Price"
+
 msgid "Stock List"
 msgstr "Stock List"
 
@@ -31,8 +46,74 @@ msgstr "5Y"
 msgid "All"
 msgstr "All"
 
-msgid "Portfolio Turnover Frequency:"
-msgstr "Portfolio Turnover Frequency:"
+msgid "Please select investment frequency and amount"
+msgstr "Please select investment frequency and amount"
+
+msgid "Please select stock to be invested"
+msgstr "Please select stock to be invested"
+
+msgid "Investment Frequency"
+msgstr "Investment Frequency"
+
+msgid "Please input money invested each time"
+msgstr "Please input money invested each time"
+
+msgid "Please select time range"
+msgstr "Please select time range"
+
+msgid "Start Year"
+msgstr "Start Year"
+
+msgid "Start Month"
+msgstr "Start Month"
+
+msgid "Start Quarter"
+msgstr "Start Quarter"
+
+msgid "End Year"
+msgstr "End Year"
+
+msgid "End Month"
+msgstr "End Month"
+
+msgid "End Quarter"
+msgstr "End Quarter"
+
+msgid "Backtesting Result"
+msgstr "Backtesting Result"
+
+msgid "Investment Period: "
+msgstr "Investment Period: "
+
+msgid "Total Cost: "
+msgstr "Total Cost: "
+
+msgid "Start Balance"
+msgstr "Start Balance"
+
+msgid "Change"
+msgstr "Change"
+
+msgid "End Balance"
+msgstr "End Balance"
+
+msgid "ROI (%)"
+msgstr "ROI (%)"
+
+msgid "During this period, the ROI of 0050 is "
+msgstr "During this period, the ROI of 0050 is "
+
+msgid "Please select time range and number of stocks to be sampled"
+msgstr "Please select time range and number of stocks to be sampled"
+
+msgid "Please select an industry"
+msgstr "Please select an industry"
+
+msgid "The program will sample stocks from selected industry only"
+msgstr "The program will sample stocks from selected industry only"
+
+msgid "Month"
+msgstr "Month"
 
 msgid "Quarter"
 msgstr "Quarter"
@@ -43,14 +124,8 @@ msgstr "Year"
 msgid "Start Year:"
 msgstr "Start Year:"
 
-msgid "Start Quarter:"
-msgstr "Start Quarter:"
-
 msgid "End Year:"
 msgstr "End Year:"
-
-msgid "End Quarter:"
-msgstr "End Quarter:"
 
 msgid "All"
 msgstr "All"
@@ -84,6 +159,9 @@ msgstr "Number of stocks"
 
 msgid "Start"
 msgstr "Start"
+
+msgid "ROI of Random Stock Selection Plan and 0050 (by year)"
+msgstr "ROI of Random Stock Selection Plan and 0050 (by year)"
 
 msgid "Please select a valid date range (End year > Start year)"
 msgstr "Please select a valid date range (End year > Start year)"

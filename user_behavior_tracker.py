@@ -4,7 +4,7 @@ from datetime import datetime
 # Function to save user session to Firestore
 def save_user_session(user_id, key_path):
     db = firestore.Client.from_service_account_json(key_path)
-    user_ref = db.collection("users").document(user_id)
+    user_ref = db.collection("users_testing").document(user_id)
     if not user_ref.get().exists:
         user_ref.set({
             "user_id": user_id,
@@ -16,7 +16,7 @@ def save_user_session(user_id, key_path):
 
 def save_tab_click_counter(user_id, tab_name, count, key_path):
     db = firestore.Client.from_service_account_json(key_path)
-    user_ref = db.collection("users").document(user_id)
+    user_ref = db.collection("users_testing").document(user_id)
     user_ref.update({
         tab_name: count,
         "timestamp": datetime.now()

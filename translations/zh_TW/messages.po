@@ -7,6 +7,15 @@ msgstr "定期定額計畫"
 msgid "Random Stock Selection Plan"
 msgstr "隨機選股計畫"
 
+msgid "Track down historical stock trend"
+msgstr "追蹤個股歷史走勢"
+
+msgid "Simulate regular saving plan"
+msgstr "模擬定期定額"
+
+msgid "Surprise from Randomness"
+msgstr "驚喜藏在隨機中"
+
 msgid "Stock List"
 msgstr "股票清單"
 
@@ -31,8 +40,44 @@ msgstr "5年"
 msgid "All"
 msgstr "全部時間"
 
-msgid "Portfolio Turnover Frequency:"
-msgstr "投資組合週轉頻率"
+msgid "Date"
+msgstr "日期"
+
+msgid "Price"
+msgstr "價格"
+
+msgid "Please select investment frequency and amount"
+msgstr "請選擇投資頻率與金額"
+
+msgid "Please select stock to be invested"
+msgstr "請選擇標的"
+
+msgid "Investment Frequency"
+msgstr "投資頻率"
+
+msgid "Please select time range"
+msgstr "請選擇起始時間"
+
+msgid "Start Year"
+msgstr "開始年份"
+
+msgid "Start Month"
+msgstr "開始月份"
+
+msgid "Start Quarter"
+msgstr "開始季度"
+
+msgid "End Year"
+msgstr "結束年份"
+
+msgid "End Month"
+msgstr "結束月份"
+
+msgid "End Quarter"
+msgstr "結束季度"
+
+msgid "Month"
+msgstr "月"
 
 msgid "Quarter"
 msgstr "季"
@@ -40,17 +85,47 @@ msgstr "季"
 msgid "Year"
 msgstr "年"
 
-msgid "Start Year:"
-msgstr "起始年:"
+msgid "Please input money invested each time"
+msgstr "請輸入每次投資金額"
 
-msgid "Start Quarter:"
-msgstr "起始季:"
+msgid "Start Year"
+msgstr "起始年"
 
-msgid "End Year:"
-msgstr "結束年:"
+msgid "End Year"
+msgstr "結束年"
 
-msgid "End Quarter:"
-msgstr "結束季:"
+msgid "Backtesting Result"
+msgstr "回測結果"
+
+msgid "Investment Period: "
+msgstr "投資區間: "
+
+msgid "Total Cost: "
+msgstr "總成本: "
+
+msgid "During this period, the ROI of 0050 is "
+msgstr "在這段期間，0050的投資報酬率為 "
+
+msgid "Start Balance"
+msgstr "起始金額"
+
+msgid "Change"
+msgstr "淨值變化"
+
+msgid "End Balance"
+msgstr "結束淨值"
+
+msgid "ROI (%)"
+msgstr "投資報酬率 (%)"
+
+msgid "Please select time range and number of stocks to be sampled"
+msgstr "請選擇時間範圍以及標的數量"
+
+msgid "Please select an industry"
+msgstr "請選擇目標產業類別"
+
+msgid "The program will sample stocks from selected industry only"
+msgstr "本模擬將會從選擇的產業類別中隨機抽取標的"
 
 msgid "All"
 msgstr "全部"
@@ -84,6 +159,9 @@ msgstr "標的數量"
 
 msgid "Start"
 msgstr "開始"
+
+msgid "ROI of Random Stock Selection Plan and 0050 (by year)"
+msgstr "隨機選股計畫與0050報酬率 (依年度分)"
 
 msgid "Please select a valid date range (End year > Start year)"
 msgstr "請選擇合法日期區間 (結束年分>開始年分)"
