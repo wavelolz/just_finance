@@ -62,18 +62,6 @@ CSS = """
 </style>
 """
 
-CSS_main = """
-    <style>
-    .container {
-        width: 100%;
-        max-width: 100%;
-        padding-left: 5%;
-        padding-right: 5%;
-    }
-    </style>
-"""
-
-
 
 def filter_date(data, code):
     """
@@ -139,7 +127,7 @@ def modify_detail_df(stocks_group, profit_ratios_group, dates, _t=None):
     formatted_infos = []
     for stocks, profits in zip(stocks_group, profit_ratios_group):
         info_list = [
-            f"{stock} (+{profit}%)" if profit > 0 else f"{stock}(-{str(profit)[1:]}%)"
+            f"{stock} (+{profit}%)" if profit > 0 else f"{stock} (-{str(profit)[1:]}%)"
             for stock, profit in zip(stocks, profits)
         ]
         formatted_infos.append(info_list)
@@ -175,7 +163,7 @@ def get_translation(language):
     return translations
 
 # Define the available languages
-languages = {'English': 'en', 'Traditional Chinese': 'zh_TW'}
+languages = {'English': 'en', '繁體中文': 'zh_TW'}
 
 # Create a selectbox for language selection
 selected_language = st.sidebar.selectbox('Select Language', options=list(languages.keys()))
@@ -183,6 +171,9 @@ selected_language = st.sidebar.selectbox('Select Language', options=list(languag
 # Load the translation function based on the selected language
 translations = get_translation(languages[selected_language])
 _t = lambda s: translations.get(s, s)
+
+linked_text = _t("Tutorial")
+st.sidebar.markdown(f'<a href="https://hackmd.io/@wavelolz005/By3CCPZvC" style="font-size:20px;">{linked_text}</a>', unsafe_allow_html=True)
 
 # tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs([_t("Stock Trend"), _t("Regular Investment Plan"), _t("Random Stock Selection Plan")])
 
@@ -386,38 +377,42 @@ if chosen_id == "2":
         
         start_date = datetime(start_year, start_month, 1)
         end_date = datetime(end_year, end_month, 1) + pd.offsets.MonthEnd(1)
-        if start_date <= end_date:
-            if end_date < max(data['date']):
-                end_date = end_date
-            else:
-                end_date = max(data['date'])
-            # Filter the data based on the selected date range
-            filtered_data = data.loc[(data['date'] >= start_date) & (data['date'] <= end_date)].copy()
-            filtered_data0050 = data0050.loc[(data0050['date'] >= start_date) & (data0050['date'] <= end_date)].copy()
-
-            duration, start_balance, end_balance, ROI = CalculateInvestmentReturns(filtered_data, duration_type, MIA)
-            _, start_balance_0050, end_balance_0050, ROI_0050 = CalculateInvestmentReturns(filtered_data0050, duration_type, MIA)
-            
-            if duration_type == "Month" or duration_type == "月":
-                duration_label = 'Month'
-            elif duration_type == "Quarter" or duration_type == "季":
-                duration_label = 'Quarter'
-            elif duration_type == "Year" or duration_type == "年":
-                duration_label = 'Year'
-
-            result = pd.DataFrame({
-                duration_label: duration,
-                'Start Balance': start_balance,
-                'Change': [round(e - s, 2) for s, e in zip(start_balance, end_balance)],
-                'End Balance': end_balance,
-                'ROI (%)': ROI
-            })
-
 
     with st.container():
         
         if st.button(_t("Start"), key="RIP2"):
-            if start_year and start_month and end_year and end_month:
+            if not (end_date > start_date):
+                st.header(_t("Invalid Input: End date needs to go after start date"))
+            elif MIA <= 0:
+                st.header(_t("Invalid Input: Amount needs to be greater than 0"))
+            else:
+
+                if end_date < max(data['date']):
+                    end_date = end_date
+                else:
+                    end_date = max(data['date'])
+                # Filter the data based on the selected date range
+                filtered_data = data.loc[(data['date'] >= start_date) & (data['date'] <= end_date)].copy()
+                filtered_data0050 = data0050.loc[(data0050['date'] >= start_date) & (data0050['date'] <= end_date)].copy()
+
+                duration, start_balance, end_balance, ROI = CalculateInvestmentReturns(filtered_data, duration_type, MIA)
+                _, start_balance_0050, end_balance_0050, ROI_0050 = CalculateInvestmentReturns(filtered_data0050, duration_type, MIA)
+                
+                if duration_type == "Month" or duration_type == "月":
+                    duration_label = 'Month'
+                elif duration_type == "Quarter" or duration_type == "季":
+                    duration_label = 'Quarter'
+                elif duration_type == "Year" or duration_type == "年":
+                    duration_label = 'Year'
+
+                result = pd.DataFrame({
+                    duration_label: duration,
+                    'Start Balance': start_balance,
+                    'Change': [round(e - s, 2) for s, e in zip(start_balance, end_balance)],
+                    'End Balance': end_balance,
+                    'ROI (%)': ROI
+                })
+
                 st.subheader(_t("Backtesting Result"))
                 st.markdown(f"<p style='font-size: 24px;'>{_t('Investment Period: ')}{start_date.strftime(r'%Y-%m-%d')}~{end_date.strftime(r'%Y-%m-%d')}</p>", unsafe_allow_html=True)
                 st.markdown(f"<p style='font-size: 24px'>{_t('Total Cost: ')}{start_balance[-1]}</p>", unsafe_allow_html=True)
@@ -447,8 +442,6 @@ if chosen_id == "2":
                 col1.metric(text1, display_individual_change, display_individual_ratio)
                 col2.metric(text2, display_etf_change, display_etf_ratio)
 
-                st.markdown(f'<p style="color:gray; font-style:italic;">{_t("During this period, the ROI of 0050 is ")} {ROI_0050[-1]} %</p>', unsafe_allow_html=True)
-
                 # Generate alternating colors for each row
                 fill_colors = [['lightgray', 'white'] * (len(result) // 2 + 1)][0][:len(result)]
 
@@ -477,8 +470,6 @@ if chosen_id == "2":
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.header("起始日必在終止日前")
 
             
 if chosen_id == "3":
@@ -516,7 +507,7 @@ if chosen_id == "3":
         progress_bar = st.progress(0)
         if st.button(_t("Start"), key="RSSP1"):
             if end_year <= start_year:
-                st.write(_t("Please select a valid date range (End year > Start year)"))
+                st.header(_t("Invalid Input: End date needs to go after start date"))
             else:
                 new_balances, new_balances_0050, dates, profit_ratios_group, stocks_group = MonkeySelectStock(
                     start_date, end_date, num_stock, choice, 1000, KEY_PATH, progress_callback, invest_interval=_t("Year"), 

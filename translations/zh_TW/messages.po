@@ -1,3 +1,6 @@
+msgid "Tutorial"
+msgstr "操作手冊"
+
 msgid "Stock Trend"
 msgstr "個股走勢"
 
@@ -94,6 +97,12 @@ msgstr "起始年"
 msgid "End Year"
 msgstr "結束年"
 
+msgid "Invalid Input: End date needs to go after start date"
+msgstr "輸入錯誤: 結束日期須在開始日期後"
+
+msgid "Invalid Input: Amount needs to be greater than 0"
+msgstr "輸入錯誤: 每次投入金額需大於0"
+
 msgid "Backtesting Result"
 msgstr "回測結果"
 
@@ -102,9 +111,6 @@ msgstr "投資區間: "
 
 msgid "Total Cost: "
 msgstr "總成本: "
-
-msgid "During this period, the ROI of 0050 is "
-msgstr "在這段期間，0050的投資報酬率為 "
 
 msgid "Start Balance"
 msgstr "起始金額"

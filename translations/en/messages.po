@@ -1,3 +1,6 @@
+msgid "Tutorial"
+msgstr "Tutorial"
+
 msgid "Stock Trend"
 msgstr "Stock Trend"
 
@@ -73,6 +76,12 @@ msgstr "Start Quarter"
 msgid "End Year"
 msgstr "End Year"
 
+msgid "Invalid Input: End date needs to go after start date"
+msgstr "Invalid Input: End date needs to go after start date"
+
+msgid "Invalid Input: Amount needs to be greater than 0"
+msgstr "Invalid Input: Amount needs to be greater than 0"
+
 msgid "End Month"
 msgstr "End Month"
 
@@ -99,9 +108,6 @@ msgstr "End Balance"
 
 msgid "ROI (%)"
 msgstr "ROI (%)"
-
-msgid "During this period, the ROI of 0050 is "
-msgstr "During this period, the ROI of 0050 is "
 
 msgid "Please select time range and number of stocks to be sampled"
 msgstr "Please select time range and number of stocks to be sampled"
