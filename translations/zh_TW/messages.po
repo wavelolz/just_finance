@@ -10,9 +10,6 @@ msgstr "定期定額計畫"
 msgid "Random Stock Selection Plan"
 msgstr "隨機選股計畫"
 
-msgid "Download Data"
-msgstr "下載資料"
-
 msgid "Stock Market Journal"
 msgstr "股市日誌"
 
