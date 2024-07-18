@@ -10,14 +10,14 @@ msgstr "定期定額計畫"
 msgid "Random Stock Selection Plan"
 msgstr "隨機選股計畫"
 
-msgid "Track down historical stock trend"
-msgstr "追蹤個股歷史走勢"
+msgid "Stock Market Journal"
+msgstr "股市日誌"
 
-msgid "Simulate regular saving plan"
-msgstr "模擬定期定額"
+msgid "Patience is the Key"
+msgstr "耐心是一切的關鍵"
 
 msgid "Surprise from Randomness"
-msgstr "驚喜藏在隨機中"
+msgstr "藏在隨機中的驚喜"
 
 msgid "Stock List"
 msgstr "股票清單"
@@ -136,26 +136,140 @@ msgstr "本模擬將會從選擇的產業類別中隨機抽取標的"
 msgid "All"
 msgstr "全部"
 
-msgid "ETF"
-msgstr "ETF"
-
-msgid "Financial and Insurance"
+msgid "Finance and Insurance"
 msgstr "金融保險"
 
-msgid "Electrical and Mechanical"
+msgid "Electrical Machinery"
 msgstr "電機機械"
 
-msgid "Electronic Industry"
+msgid "Electronics Industry"
 msgstr "電子工業"
-
-msgid "Telecommunications and Networking Industry"
-msgstr "通信網路業"
 
 msgid "Semiconductor Industry"
 msgstr "半導體業"
 
 msgid "Computer and Peripheral Equipment Industry"
 msgstr "電腦及週邊設備業"
+
+msgid "Automotive Industry"
+msgstr "汽車工業"
+
+msgid "Electronic Components Industry"
+msgstr "電子零組件業"
+
+msgid "Glass and Ceramics"
+msgstr "玻璃陶瓷"
+
+msgid "ETN"
+msgstr "ETN"
+
+msgid "Digital Cloud"
+msgstr "數位雲端"
+
+msgid "Biotechnology and Medical Care"
+msgstr "生技醫療"
+
+msgid "Building Materials and Construction"
+msgstr "建材營造"
+
+msgid "Rubber Industry"
+msgstr "橡膠工業"
+
+msgid "Other Electronics"
+msgstr "其他電子類"
+
+msgid "Electronics Industry"
+msgstr "電子工業"
+
+msgid "Beneficiary Securities"
+msgstr "受益證券"
+
+msgid "Steel Industry"
+msgstr "鋼鐵工業"
+
+msgid "Food Industry"
+msgstr "食品工業"
+
+msgid "Green Energy and Environmental Protection"
+msgstr "綠能環保"
+
+msgid "Depositary Receipts"
+msgstr "存託憑證"
+
+msgid "Innovative Board Stocks"
+msgstr "創新版股票"
+
+msgid "Oil, Electricity, and Gas Industry"
+msgstr "油電燃氣業"
+
+msgid "Cement Industry"
+msgstr "水泥工業"
+
+msgid "Optoelectronics Industry"
+msgstr "光電業"
+
+msgid "Agricultural Technology"
+msgstr "農業科技"
+
+msgid "Cultural and Creative Industry"
+msgstr "文化創意業"
+
+msgid "Tourism Industry"
+msgstr "觀光事業"
+
+msgid "Telecommunication and Network Industry"
+msgstr "通信網路業"
+
+msgid "Others"
+msgstr "其他"
+
+msgid "Shipping Industry"
+msgstr "航運業"
+
+msgid "Paper Industry"
+msgstr "造紙工業"
+
+msgid "Finance and Insurance"
+msgstr "金融保險"
+
+msgid "Tourism and Hospitality"
+msgstr "觀光餐旅"
+
+msgid "Textile and Fiber"
+msgstr "紡織纖維"
+
+msgid "Electrical Appliances and Cables"
+msgstr "電器電纜"
+
+msgid "Electrical Machinery"
+msgstr "電機機械"
+
+msgid "Home and Living"
+msgstr "居家生活"
+
+msgid "Trading and Department Stores"
+msgstr "貿易百貨"
+
+msgid "Electronic Distribution Industry"
+msgstr "電子通路業"
+
+msgid "Information Service Industry"
+msgstr "資訊服務業"
+
+msgid "Chemical Industry"
+msgstr "化學工業"
+
+msgid "Plastics Industry"
+msgstr "塑膠工業"
+
+msgid "ETF"
+msgstr "ETF"
+
+msgid "The following shows the stocks selected"
+msgstr "以下呈現各段期間所選取的股票"
+
+msgid "This table shows the ROI of each stock"
+msgstr "以下表格呈現每檔股票的報酬率"
 
 msgid "Please select an industry"
 msgstr "請選擇一個產業"

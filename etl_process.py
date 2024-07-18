@@ -36,8 +36,8 @@ def FetchChineseName(key_path):
     df = pd.DataFrame.from_dict(data, orient="index")
     df.reset_index(inplace=True)
     df.rename(columns={"index" : "id"}, inplace=True)
-    l = [df.iloc[i]["id"][1:].upper()+"-"+df.iloc[i]["n"] for i in range(len(df))]
-    return l
+    df["id"] = df["id"].map(lambda x: str(x).upper()[1:])
+    return df
 
 @st.cache_data
 def FetchDateMargin(key_path):
@@ -52,7 +52,7 @@ def FetchDateMargin(key_path):
 
 @st.cache_data
 def CleanData(data):
-    filter_data = data.loc[data["close"] != 0]
+    filter_data = data.loc[data["c"] != 0]
     return filter_data
 
 @st.cache_data

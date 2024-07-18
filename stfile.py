@@ -12,6 +12,8 @@ import plotly.io as pio
 import polib
 import extra_streamlit_components as stx
 import uuid
+from PIL import Image
+
 
 # Custom module imports
 from etl_process import FetchDatasetList, FetchData, FetchChineseName, CleanData, ExtractMarketCloseDate
@@ -127,7 +129,7 @@ def modify_detail_df(stocks_group, profit_ratios_group, dates, _t=None):
     formatted_infos = []
     for stocks, profits in zip(stocks_group, profit_ratios_group):
         info_list = [
-            f"{stock} (+{profit}%)" if profit > 0 else f"{stock} (-{str(profit)[1:]}%)"
+            f"{stock.split('-')[0]} (+{profit}%)" if profit > 0 else f"{stock.split('-')[0]} (-{str(profit)[1:]}%)"
             for stock, profit in zip(stocks, profits)
         ]
         formatted_infos.append(info_list)
@@ -162,12 +164,21 @@ def get_translation(language):
     translations = {entry.msgid: entry.msgstr for entry in po}
     return translations
 
+
+st.sidebar.markdown(f"<p style='font-size: 24px'>Stockaroo</p>", unsafe_allow_html=True)
+
+
+image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "logo.png")
+image = Image.open(image_path)
+st.sidebar.image(image, width=150)
+
+st.sidebar.markdown("<hr style='margin-top: 0px; margin-bottom: 0px;'>", unsafe_allow_html=True)
 # Define the available languages
 languages = {'English': 'en', '繁體中文': 'zh_TW'}
 
 # Create a selectbox for language selection
 selected_language = st.sidebar.selectbox('Select Language', options=list(languages.keys()))
-
+st.sidebar.markdown("<hr style='margin-top: 0px; margin-bottom: 0px;'>", unsafe_allow_html=True)
 # Load the translation function based on the selected language
 translations = get_translation(languages[selected_language])
 _t = lambda s: translations.get(s, s)
@@ -175,12 +186,14 @@ _t = lambda s: translations.get(s, s)
 linked_text = _t("Tutorial")
 st.sidebar.markdown(f'<a href="https://hackmd.io/@wavelolz005/By3CCPZvC" style="font-size:20px;">{linked_text}</a>', unsafe_allow_html=True)
 
+
+
 # tab_graph, tab_dollar_cost_averaging, tab_random_strategy = st.tabs([_t("Stock Trend"), _t("Regular Investment Plan"), _t("Random Stock Selection Plan")])
 
 # Define the tab bar
 chosen_id = stx.tab_bar(data=[
-    stx.TabBarItemData(id=1, title=_t("Stock Trend"), description=_t("Track down historical stock trend")),
-    stx.TabBarItemData(id=2, title=_t("Regular Investment Plan"), description=_t("Simulate regular saving plan")),
+    stx.TabBarItemData(id=1, title=_t("Stock Trend"), description=_t("Stock Market Journal")),
+    stx.TabBarItemData(id=2, title=_t("Regular Investment Plan"), description=_t("Patience is the Key")),
     stx.TabBarItemData(id=3, title=_t("Random Stock Selection Plan"), description=_t("Surprise from Randomness")),
 ], default=1)
 
@@ -201,7 +214,8 @@ if st.session_state['active_tab'] != int(chosen_id):
         
 if chosen_id == "1":
     # Fetch the list of stock IDs
-    stock_list = FetchChineseName(KEY_PATH)
+    stock_df = FetchChineseName(KEY_PATH)
+    stock_list = [stock_df.iloc[i]["id"]+"-"+stock_df.iloc[i]["n"] for i in range(len(stock_df))]
 
     # Select a stock from the list
     selected_stock = st.selectbox(_t("Stock List"), stock_list, key="G1")
@@ -236,7 +250,7 @@ if chosen_id == "1":
     # Create the line plot
     line_plot = go.Scatter(
         x=filtered_data["date"],
-        y=filtered_data["close"],
+        y=filtered_data["c"],
         mode="lines"
     )
     fig = go.Figure()
@@ -297,7 +311,8 @@ if chosen_id == "2":
         st.subheader(_t("Please select investment frequency and amount"))
 
         # Fetch the list of stock IDs
-        stock_list = FetchChineseName(KEY_PATH)
+        stock_df = FetchChineseName(KEY_PATH)
+        stock_list = [stock_df.iloc[i]["id"]+"-"+stock_df.iloc[i]["n"] for i in range(len(stock_df))]
 
         # Select a stock from the list
         selected_stock_label = st.selectbox(_t("Please select stock to be invested"), stock_list, key="RIP1")
@@ -497,11 +512,21 @@ if chosen_id == "3":
 
         st.subheader(_t("Please select an industry"))
         # Select stock category
-        options = [_t("All"), _t("ETF"), _t("Financial and Insurance"), 
-                _t("Electrical and Mechanical"), _t("Electronic Industry"), 
-                _t("Telecommunications and Networking Industry"), _t("Semiconductor Industry"), 
-                _t("Computer and Peripheral Equipment Industry")]
-        choice = st.radio(_t("The program will sample stocks from selected industry only"), options)
+        options = [_t("All"), _t("ETF"), _t("Finance and Insurance"), 
+                _t("Electrical Machinery"), _t("Electronics Industry"), 
+                _t("Telecommunication and Network Industry"), _t("Semiconductor Industry"), 
+                _t("Computer and Peripheral Equipment Industry"), _t("Automotive Industry"),
+                _t("Electronic Components Industry"), _t("Glass and Ceramics"), _t("ETN"),
+                _t("Digital Cloud"), _t("Biotechnology and Medical Care"), _t("Building Materials and Construction"),
+                _t("Rubber Industry"), _t("Other Electronics"), _t("Beneficiary Securities"),
+                _t("Steel Industry"), _t("Food Industry"), _t("Green Energy and Environmental Protection"),
+                _t("Depositary Receipts"), _t("Innovative Board Stocks"), _t("Oil, Electricity, and Gas Industry"),
+                _t("Cement Industry"), _t("Optoelectronics Industry"), _t("Agricultural Technology"), 
+                _t("Cultural and Creative Industry"), _t("Tourism Industry"), _t("Others"), _t("Shipping Industry"),
+                _t("Paper Industry"), _t("Tourism and Hospitality"), _t("Textile and Fiber"), _t("Electrical Appliances and Cables"),
+                _t("Electrical Machinery"), _t("Home and Living"), _t("Trading and Department Stores"), _t("Electronic Distribution Industry"),
+                _t("Information Service Industry"), _t("Chemical Industry"), _t("Plastics Industry")]
+        choice = st.selectbox(_t("The program will sample stocks from selected industry only"), options)
 
     with st.container():
         progress_bar = st.progress(0)
@@ -665,9 +690,39 @@ if chosen_id == "3":
 
                 st.markdown(html_code, unsafe_allow_html=True)
 
+                # Display stock portfolio
+                stock_df = FetchChineseName(KEY_PATH)
+                for i in range(len(stocks_group)):
+                    for j in range(len(stocks_group[i])):
+                        stocks_group[i][j] = stocks_group[i][j] + "-" + stock_df.loc[stock_df["id"]==stocks_group[i][j]]["n"].values[0]
+                date_intervals = [
+                    f"{dates[i][:4]}~{dates[i+1][:4]}" 
+                    for i in range(len(dates)-1)
+                ]
+
+
+                st.markdown(
+                    f"""
+                    <h1 style='text-align: center; font-family: "Arial Black"; font-size: 20px;'>
+                    {_t("The following shows the stocks selected")}
+                    </h1>
+                    """,
+                    unsafe_allow_html=True
+                )
+                cols = st.columns(len(date_intervals))
+
+                for i in range(len(date_intervals)):
+                    cols[i].markdown("<hr style='margin-top: 0px; margin-bottom: 0px;'>", unsafe_allow_html=True) 
+                    cols[i].markdown('<div class="custom-container">', unsafe_allow_html=True)
+                    cols[i].markdown(f'<div class="custom-column"><h3 style="margin-top: -10px; margin-bottom: 0px;">⭐ {date_intervals[i]}</h3></div>', unsafe_allow_html=True)
+                    for stock in stocks_group[i]:
+                        cols[i].markdown(f'<div class="custom-column"><h6 style="margin-top: 0px; margin-bottom: 0px; padding-left: 5px">{stock}</h6></div>', unsafe_allow_html=True)
+                    cols[i].markdown('</div>', unsafe_allow_html=True)
+                    cols[i].markdown("<hr style='margin-top: 0px; margin-bottom: 0px;'>", unsafe_allow_html=True)  # Add a horizontal line with shorter spacing
+                    i += 1
+                
                 # Displayed detailed information
                 df_detail_info = modify_detail_df(stocks_group, profit_ratios_group, dates, _t)
-
                 fill_colors = [['lightgray', 'white'] * (len(df_detail_info) // 2 + 1)][0][:len(df_detail_info)]
                 fig = go.Figure(data=go.Table(
                     header=dict(
@@ -691,7 +746,15 @@ if chosen_id == "3":
                 fig.update_layout(
                         paper_bgcolor='rgba(0,0,0,0)',
                         plot_bgcolor='rgba(0,0,0,0)',
+                        title = dict(
+                        text=_t("This table shows the ROI of each stock"),
+                        font=dict(
+                            size=20,
+                            family="Arial Black"
+                        ),
+                        x=0.5,
+                        xanchor="center")
                     )
-                
+
                 st.plotly_chart(fig, use_container_width=True)
                 

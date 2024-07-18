@@ -1,5 +1,7 @@
 __pycache__/
+secret_info/
 *.json
+*.xlsx
 test.py
 parallel_task.py
-secret_info/
+etl_development.py

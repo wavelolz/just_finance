@@ -10,11 +10,11 @@ msgstr "Regular Investment Plan"
 msgid "Random Stock Selection Plan"
 msgstr "Random Stock Selection Plan"
 
-msgid "Track down historical stock trend"
-msgstr "Track down historical stock trend"
+msgid "Stock Market Journal"
+msgstr "Stock Market Journal"
 
-msgid "Simulate regular saving plan"
-msgstr "Simulate regular saving plan"
+msgid "Patience is the Key"
+msgstr "Patience is the Key"
 
 msgid "Surprise from Randomness"
 msgstr "Surprise from Randomness"
@@ -136,32 +136,140 @@ msgstr "End Year:"
 msgid "All"
 msgstr "All"
 
-msgid "ETF"
-msgstr "ETF"
-
-msgid "Financial and Insurance"
-msgstr "Financial and Insurance"
-
-msgid "Electrical and Mechanical"
-msgstr "Electrical and Mechanical"
-
-msgid "Electronic Industry"
-msgstr "Electronic Industry"
-
-msgid "Telecommunications and Networking Industry"
-msgstr "Telecommunications and Networking Industry"
-
 msgid "Semiconductor Industry"
 msgstr "Semiconductor Industry"
 
+msgid "Automotive Industry"
+msgstr "Automotive Industry"
+
+msgid "Electronic Components Industry"
+msgstr "Electronic Components Industry"
+
+msgid "Glass and Ceramics"
+msgstr "Glass and Ceramics"
+
+msgid "ETN"
+msgstr "ETN"
+
+msgid "Digital Cloud"
+msgstr "Digital Cloud"
+
+msgid "Biotechnology and Medical Care"
+msgstr "Biotechnology and Medical Care"
+
+msgid "Building Materials and Construction"
+msgstr "Building Materials and Construction"
+
+msgid "Telecommunication and Network Industry"
+msgstr "Telecommunication and Network Industry"
+
+msgid "Rubber Industry"
+msgstr "Rubber Industry"
+
+msgid "Other Electronics"
+msgstr "Other Electronics"
+
+msgid "Electronics Industry"
+msgstr "Electronics Industry"
+
+msgid "Beneficiary Securities"
+msgstr "Beneficiary Securities"
+
+msgid "Steel Industry"
+msgstr "Steel Industry"
+
 msgid "Computer and Peripheral Equipment Industry"
 msgstr "Computer and Peripheral Equipment Industry"
+
+msgid "Food Industry"
+msgstr "Food Industry"
+
+msgid "Green Energy and Environmental Protection"
+msgstr "Green Energy and Environmental Protection"
+
+msgid "Depositary Receipts"
+msgstr "Depositary Receipts"
+
+msgid "Innovative Board Stocks"
+msgstr "Innovative Board Stocks"
+
+msgid "Oil, Electricity, and Gas Industry"
+msgstr "Oil, Electricity, and Gas Industry"
+
+msgid "Cement Industry"
+msgstr "Cement Industry"
+
+msgid "Optoelectronics Industry"
+msgstr "Optoelectronics Industry"
+
+msgid "Agricultural Technology"
+msgstr "Agricultural Technology"
+
+msgid "Cultural and Creative Industry"
+msgstr "Cultural and Creative Industry"
+
+msgid "Tourism Industry"
+msgstr "Tourism Industry"
+
+msgid "Communication and Network Industry"
+msgstr "Communication and Network Industry"
+
+msgid "Others"
+msgstr "Others"
+
+msgid "Shipping Industry"
+msgstr "Shipping Industry"
+
+msgid "Paper Industry"
+msgstr "Paper Industry"
+
+msgid "Finance and Insurance"
+msgstr "Finance and Insurance"
+
+msgid "Tourism and Hospitality"
+msgstr "Tourism and Hospitality"
+
+msgid "Textile and Fiber"
+msgstr "Textile and Fiber"
+
+msgid "Electrical Appliances and Cables"
+msgstr "Electrical Appliances and Cables"
+
+msgid "Electrical Machinery"
+msgstr "Electrical Machinery"
+
+msgid "Home and Living"
+msgstr "Home and Living"
+
+msgid "Trading and Department Stores"
+msgstr "Trading and Department Stores"
+
+msgid "Electronic Distribution Industry"
+msgstr "Electronic Distribution Industry"
+
+msgid "Information Service Industry"
+msgstr "Information Service Industry"
+
+msgid "Chemical Industry"
+msgstr "Chemical Industry"
+
+msgid "Plastics Industry"
+msgstr "Plastics Industry"
+
+msgid "ETF"
+msgstr "ETF"
 
 msgid "Please select an industry"
 msgstr "Please select an industry"
 
 msgid "Number of stocks"
 msgstr "Number of stocks"
+
+msgid "The following shows the stocks selected"
+msgstr "The following shows the stocks selected"
+
+msgid "This table shows the ROI of each stock"
+msgstr "This table shows the ROI of each stock"
 
 msgid "Start"
 msgstr "Start"

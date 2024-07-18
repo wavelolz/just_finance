@@ -55,8 +55,8 @@ def CalculateInvestmentReturns(filtered_data, duration_type, MIA=1000):
         durations = np.arange(len(first_days)) + 1  # Durations from 0 to the number of periods - 1
 
         # Calculate cumulative stock bought for each period
-        opening_prices = first_days['open'].values
-        closing_prices = last_days['close'].values
+        opening_prices = first_days['o'].values
+        closing_prices = last_days['c'].values
 
         cumulative_stock = np.cumsum(MIA / opening_prices)
         cost = np.cumsum([MIA] * len(opening_prices))
