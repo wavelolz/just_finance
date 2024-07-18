@@ -13,6 +13,7 @@ import polib
 import extra_streamlit_components as stx
 import uuid
 from PIL import Image
+import io
 
 
 # Custom module imports
@@ -25,9 +26,19 @@ from user_behavior_tracker import save_user_session, save_tab_click_counter
 st.set_page_config(layout="wide")
 pio.templates.default = "plotly_dark"
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-KEY_PATH = os.path.join(DIR_PATH, "secret_info/stockaroo-privatekey.json")
-
+KEY_PATH = {
+    "type": st.secrets["firebase"]["type"],
+    "project_id": st.secrets["firebase"]["project_id"],
+    "private_key_id": st.secrets["firebase"]["private_key_id"],
+    "private_key": st.secrets["firebase"]["private_key"],
+    "client_email": st.secrets["firebase"]["client_email"],
+    "client_id": st.secrets["firebase"]["client_id"],
+    "auth_uri": st.secrets["firebase"]["auth_uri"],
+    "token_uri": st.secrets["firebase"]["token_uri"],
+    "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
+    "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"],
+    "universe_domain": st.secrets["firebase"]["universe_domain"]
+}
 
 # initialize the structure
 if 'user_id' not in st.session_state:
@@ -64,6 +75,16 @@ CSS = """
 </style>
 """
 
+
+def create_excel(df):
+    dfc = df.copy()
+    dfc.columns = ["date", "min", "max", "open", "close"]
+    dfc = dfc[["date", "open", "close", "min", "max"]]
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        dfc.to_excel(writer, sheet_name='Sheet1', index=False)
+    buffer.seek(0)
+    return buffer
 
 def filter_date(data, code):
     """
@@ -174,7 +195,7 @@ st.sidebar.image(image, width=150)
 
 st.sidebar.markdown("<hr style='margin-top: 0px; margin-bottom: 0px;'>", unsafe_allow_html=True)
 # Define the available languages
-languages = {'English': 'en', '繁體中文': 'zh_TW'}
+languages = { '繁體中文': 'zh_TW', 'English': 'en'}
 
 # Create a selectbox for language selection
 selected_language = st.sidebar.selectbox('Select Language', options=list(languages.keys()))
@@ -246,6 +267,16 @@ if chosen_id == "1":
     # Filter data based on the selected duration
     filter_code = duration_map[selected_duration]
     filtered_data = filter_date(cleaned_data, filter_code)
+
+    excel_file = create_excel(filtered_data)
+
+    st.markdown("<hr style='margin-top: 0px; margin-bottom: 0px;'>", unsafe_allow_html=True)
+    st.download_button(
+        label=_t("Download Data"),
+        data=excel_file,
+        file_name=f"{selected_stock[1:]}_{selected_duration}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
     # Create the line plot
     line_plot = go.Scatter(

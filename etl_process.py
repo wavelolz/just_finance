@@ -2,10 +2,13 @@ from datetime import datetime, timedelta
 import streamlit as st
 import pandas as pd
 from google.cloud import firestore
+from google.oauth2 import service_account
+
 
 @st.cache_data
 def FetchDatasetList(key_path):
-    db = firestore.Client.from_service_account_json(key_path)
+    credentials = service_account.Credentials.from_service_account_info(key_path)
+    db = firestore.Client(credentials=credentials)
     doc_ref = db.collection("info").document("info_data")
     doc = doc_ref.get()
     data = doc.to_dict()
@@ -16,7 +19,8 @@ def FetchDatasetList(key_path):
 
 @st.cache_data
 def FetchData(collection_name, stock_id, key_path):
-    db = firestore.Client.from_service_account_json(key_path)
+    credentials = service_account.Credentials.from_service_account_info(key_path)
+    db = firestore.Client(credentials=credentials)
     doc_ref = db.collection(collection_name).document(stock_id)
     doc = doc_ref.get()
     data = doc.to_dict()
@@ -28,7 +32,8 @@ def FetchData(collection_name, stock_id, key_path):
 
 @st.cache_data
 def FetchChineseName(key_path):
-    db = firestore.Client.from_service_account_json(key_path)
+    credentials = service_account.Credentials.from_service_account_info(key_path)
+    db = firestore.Client(credentials=credentials)
     doc_ref = db.collection("info").document("info_data")
     doc = doc_ref.get()
     data = doc.to_dict()
@@ -41,7 +46,8 @@ def FetchChineseName(key_path):
 
 @st.cache_data
 def FetchDateMargin(key_path):
-    db = firestore.Client.from_service_account_json(key_path)
+    credentials = service_account.Credentials.from_service_account_info(key_path)
+    db = firestore.Client(credentials=credentials)
     doc_ref = db.collection("date_margin").document("date_margin_data")
     doc = doc_ref.get()
     data = doc.to_dict()
