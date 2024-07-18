@@ -1,5 +1,6 @@
 __pycache__/
 secret_info/
+.streamlit/
 *.json
 *.xlsx
 test.py
