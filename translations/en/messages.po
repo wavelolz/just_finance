@@ -13,9 +13,6 @@ msgstr "Random Stock Selection Plan"
 msgid "Stock Market Journal"
 msgstr "Stock Market Journal"
 
-msgid "Download Data"
-msgstr "Download Data"
-
 msgid "Patience is the Key"
 msgstr "Patience is the Key"
 
