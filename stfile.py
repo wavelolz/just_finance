@@ -270,16 +270,6 @@ if chosen_id == "1":
     filtered_data = filter_date(cleaned_data, filter_code)
     
     st.markdown("<hr style='margin-top: 0px; margin-bottom: 0px;'>", unsafe_allow_html=True) 
-    # Create the Excel file
-    excel_file = create_excel(filtered_data)
-
-    # Create a download button
-    st.download_button(
-        label=_t("Download Data"),
-        data=excel_file,
-        file_name=f"{selected_stock[1:]}_{selected_duration}_data.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
     
     # Create the line plot
     line_plot = go.Scatter(
@@ -336,6 +326,17 @@ if chosen_id == "1":
 
     # Display the plot
     st.plotly_chart(fig, use_container_width=True)
+
+    # Create the Excel file
+    excel_file = create_excel(filtered_data)
+
+    # Create a download button
+    st.download_button(
+        label=_t("Download Data"),
+        data=excel_file,
+        file_name=f"{selected_stock[1:]}_{selected_duration}_data.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 if chosen_id == "2":
 
